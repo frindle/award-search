@@ -28,6 +28,15 @@ from ..settings import load_settings, save_settings
 search_results: Dict[str, Any] = {}
 saved_alerts: Dict[str, Dict] = {}
 
+CSRF_SECRET = os.environ.get("CSRF_SECRET", "change-me-in-production")
+
+
+def _generate_csrf_token() -> str:
+    import hashlib
+    import time
+    token_data = f"{uuid.uuid4().hex}{time.time()}{CSRF_SECRET}"
+    return hashlib.sha256(token_data.encode()).hexdigest()
+
 MAX_RESULTS_AGE = timedelta(hours=24)
 
 
@@ -346,16 +355,19 @@ async def get_settings_page(request: Request):
         "serpapi": bool(settings.get("serpapi_api_key")),
         "pushover": bool(settings.get("pushover_app_token") and settings.get("pushover_user_key")),
     }
+    csrf_token = _generate_csrf_token()
     return templates.TemplateResponse("settings.html", {
         "request": request,
         "settings": settings,
         "configured": configured,
+        "csrf_token": csrf_token,
     })
 
 
 @app.post("/settings/save")
 async def save_settings_form(
     request: Request,
+    csrf_token: str = Form(...),
     seats_aero_api_key: str = Form(""),
     awardwallet_api_key: str = Form(""),
     awardwallet_user_id: str = Form(""),
@@ -363,6 +375,9 @@ async def save_settings_form(
     pushover_app_token: str = Form(""),
     pushover_user_key: str = Form(""),
 ):
+    # Basic CSRF check - in production use starlette-csrf or similar
+    if len(csrf_token) != 64:
+        return RedirectResponse(url="/settings?error=csrf", status_code=303)
     save_settings({
         "seats_aero_api_key": seats_aero_api_key,
         "awardwallet_api_key": awardwallet_api_key,
@@ -391,7 +406,14 @@ async def create_alert(
     cabin: str = Form("economy"),
     programs: List[str] = Form(default=[]),
     notify_pushover: bool = Form(False),
+    csrf_token: str = Form(""),
 ):
+    if len(csrf_token) != 64:
+        return templates.TemplateResponse("alerts.html", {
+            "request": request,
+            "alerts": saved_alerts,
+            "error": "Invalid request",
+        })
     alert_id = f"alert_{uuid.uuid4().hex[:12]}"
 
     saved_alerts[alert_id] = {

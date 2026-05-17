@@ -43,6 +43,9 @@
 
         <h1>Settings</h1>
 
+        {% if request.query_params.get('error') %}
+        <div class="error-box">Invalid request. Please try again.</div>
+        {% endif %}
         {% if request.query_params.get('saved') %}
         <div class="success">Settings saved successfully.</div>
         {% endif %}
@@ -77,6 +80,7 @@
 
         <div class="card">
             <form action="/settings/save" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="section-title">API Keys</div>
 
                 <div class="form-group">

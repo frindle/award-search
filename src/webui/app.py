@@ -1,8 +1,9 @@
 import asyncio
 import os
+import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 
@@ -26,6 +27,31 @@ from ..settings import load_settings, save_settings
 
 search_results: Dict[str, Any] = {}
 saved_alerts: Dict[str, Dict] = {}
+
+MAX_RESULTS_AGE = timedelta(hours=24)
+
+
+def _cleanup_old_results():
+    """Remove results older than 24 hours."""
+    cutoff = datetime.now() - MAX_RESULTS_AGE
+    to_delete = [
+        k for k, v in search_results.items()
+        if datetime.fromisoformat(v["timestamp"]) < cutoff
+    ]
+    for k in to_delete:
+        del search_results[k]
+
+
+def _generate_search_id() -> str:
+    return f"search_{uuid.uuid4().hex[:12]}"
+
+
+def _validate_airport(code: str) -> str:
+    """Validate airport code is 3 uppercase letters."""
+    code = code.strip().upper()
+    if len(code) != 3 or not code.isalpha():
+        raise ValueError(f"Invalid airport code: {code}")
+    return code
 
 
 @asynccontextmanager
@@ -94,7 +120,10 @@ async def search(
     show_balances: bool = Form(False),
     user_id: str = Form(""),
 ):
-    search_id = f"search_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    _cleanup_old_results()
+    search_id = _generate_search_id()
+    origin = _validate_airport(origin)
+    destination = _validate_airport(destination)
 
     balances_summary = None
     seats_aero_results = []
@@ -199,7 +228,14 @@ async def positioning_search(
     cabin: str = Form("economy"),
     nearby_airports: str = Form(""),
 ):
-    departure = date.fromisoformat(departure_date)
+    try:
+        departure = date.fromisoformat(departure_date)
+    except ValueError:
+        return templates.TemplateResponse("positioning.html", {
+            "request": request,
+            "serpapi_configured": serpapi_configured,
+            "error": "Invalid date format. Use YYYY-MM-DD",
+        })
     nearby = [a.strip().upper() for a in nearby_airports.split(",") if a.strip()] if nearby_airports else None
 
     settings = load_settings()
@@ -338,7 +374,7 @@ async def create_alert(
     programs: List[str] = Form(default=[]),
     notify_pushover: bool = Form(False),
 ):
-    alert_id = f"alert_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    alert_id = f"alert_{uuid.uuid4().hex[:12]}"
 
     saved_alerts[alert_id] = {
         "id": alert_id,

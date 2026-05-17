@@ -25,15 +25,11 @@ def _find_credentials_file() -> Optional[Path]:
 
 
 def load_seats_aero_credentials() -> Optional[Dict[str, str]]:
-    if os.environ.get("SEATS_AERO_API_KEY"):
-        return {"api_key": os.environ["SEATS_AERO_API_KEY"]}
-
-    creds_file = _find_credentials_file()
-    if creds_file:
-        with open(creds_file) as f:
-            data = yaml.safe_load(f)
-        return {"api_key": data.get("api_key")}
-
+    from .settings import load_settings
+    settings = load_settings()
+    api_key = settings.get("seats_aero_api_key") or os.environ.get("SEATS_AERO_API_KEY")
+    if api_key:
+        return {"api_key": api_key}
     return None
 
 

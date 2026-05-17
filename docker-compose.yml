@@ -3,17 +3,15 @@ version: '3.8'
 services:
   award-search:
     build: .
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=all
-      - DISPLAY=:99
     ports:
-      - "6080:6080"   # noVNC web interface
-      - "5900:5900"   # VNC
+      - "8000:8000"
     volumes:
-      - ./config:/home/appuser/award-search/config:ro
-      - ./output:/home/appuser/award-search/output
       - ./credentials:/home/appuser/award-search/credentials:ro
-    shm_size: '2gb'
+    environment:
+      - SEATS_AERO_API_KEY=${SEATS_AERO_API_KEY:-}
+      - AWARDWALLET_API_KEY=${AWARDWALLET_API_KEY:-}
+      - AWARDWALLET_USER_ID=${AWARDWALLET_USER_ID:-}
+      - SERPAPI_API_KEY=${SERPAPI_API_KEY:-}
+      - PUSHOVER_APP_TOKEN=${PUSHOVER_APP_TOKEN:-}
+      - PUSHOVER_USER_KEY=${PUSHOVER_USER_KEY:-}
     restart: unless-stopped

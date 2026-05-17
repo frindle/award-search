@@ -124,6 +124,24 @@ async def search(
     search_id = _generate_search_id()
     origin = _validate_airport(origin)
     destination = _validate_airport(destination)
+    
+    try:
+        departure = date.fromisoformat(departure_date)
+        if return_date:
+            return_date = date.fromisoformat(return_date).isoformat()
+    except ValueError:
+        return templates.TemplateResponse("results.html", {
+            "request": request,
+            "search_id": "",
+            "origin": origin.upper(),
+            "destination": destination.upper(),
+            "departure_date": departure_date,
+            "return_date": return_date,
+            "cabin": cabin,
+            "programs": get_programs(),
+            "selected_programs": selected_programs,
+            "search_results": {"errors": ["Invalid date format. Use YYYY-MM-DD"]},
+        })
 
     balances_summary = None
     seats_aero_results = []
@@ -448,10 +466,6 @@ async def get_alert_results(alert_id: str):
     return saved_alerts[alert_id].get("last_results", [])
 
 
-def _has_seats_aero_creds() -> bool:
-    from ..seats_aero import load_seats_aero_credentials
-    creds = load_seats_aero_credentials()
-    return creds is not None and bool(creds.get("api_key"))
 
 
 def _search_seats_aero(origin, destination, departure_date, return_date, cabin, programs):

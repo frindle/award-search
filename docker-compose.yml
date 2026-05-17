@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   award-search:
     build: .
-    ports:
-      - "8000:8000"
+    networks:
+      - award-net
     volumes:
-      - ./credentials:/home/appuser/award-search/credentials:ro
+      - ./credentials:/app/credentials:ro
     environment:
       - SEATS_AERO_API_KEY=${SEATS_AERO_API_KEY:-}
       - AWARDWALLET_API_KEY=${AWARDWALLET_API_KEY:-}
@@ -15,3 +13,13 @@ services:
       - PUSHOVER_APP_TOKEN=${PUSHOVER_APP_TOKEN:-}
       - PUSHOVER_USER_KEY=${PUSHOVER_USER_KEY:-}
     restart: unless-stopped
+
+networks:
+  award-net:
+    driver: macvlan
+    driver_opts:
+      parent: br0
+    ipam:
+      config:
+        - subnet: 10.0.0.0/20
+          gateway: 10.0.0.1

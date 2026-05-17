@@ -20,7 +20,8 @@ from ..search.programs.base import load_programs_config
 from ..awardwallet import AwardWalletClient
 from ..seats_aero import SeatsAeroClient, SeatsAeroAvailability
 from ..pushover import PushoverClient, send_award_notification
-from ..google_flights import search_positioning_multi, SerpApiClient, load_serpapi_credentials
+from ..google_flights import search_positioning_multi, SerpApiClient
+from ..settings import load_settings, save_settings
 
 
 search_results: Dict[str, Any] = {}
@@ -67,22 +68,15 @@ def get_programs():
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     programs = get_programs()
+    settings = load_settings()
 
-    awardwallet_user = os.environ.get("AWARDWALLET_USER_ID", "")
-    if not awardwallet_user:
-        try:
-            creds = AwardWalletClient._load_cred()
-            awardwallet_user = creds.get("user_id", "") if creds else ""
-        except Exception:
-            awardwallet_user = ""
-
-    seats_aero_key = "configured" if os.environ.get("SEATS_AERO_API_KEY") or _has_seats_aero_creds() else "not_configured"
+    seats_aero_status = "configured" if settings.get("seats_aero_api_key") else "not_configured"
 
     return templates.TemplateResponse("index.html", {
         "request": request,
         "programs": programs,
-        "awardwallet_user": awardwallet_user,
-        "seats_aero_status": seats_aero_key,
+        "awardwallet_user": settings.get("awardwallet_user_id", ""),
+        "seats_aero_status": seats_aero_status,
     })
 
 
@@ -107,11 +101,9 @@ async def search(
 
     if show_balances:
         try:
-            api_key = os.environ.get("AWARDWALLET_API_KEY")
-            if not api_key:
-                creds = AwardWalletClient._load_cred()
-                api_key = creds.get("api_key") if creds else None
-            effective_user = user_id or os.environ.get("AWARDWALLET_USER_ID")
+            settings = load_settings()
+            api_key = settings.get("awardwallet_api_key")
+            effective_user = user_id or settings.get("awardwallet_user_id")
             if api_key and effective_user:
                 client = AwardWalletClient(api_key, effective_user)
                 balances_summary = client.get_balances()
@@ -189,7 +181,8 @@ async def get_results(search_id: str, request: Request):
 
 @app.get("/positioning", response_class=HTMLResponse)
 async def positioning_page(request: Request):
-    serpapi_configured = bool(os.environ.get("SERPAPI_API_KEY") or load_serpapi_credentials())
+    settings = load_settings()
+    serpapi_configured = bool(settings.get("serpapi_api_key"))
 
     return templates.TemplateResponse("positioning.html", {
         "request": request,
@@ -209,7 +202,8 @@ async def positioning_search(
     departure = date.fromisoformat(departure_date)
     nearby = [a.strip().upper() for a in nearby_airports.split(",") if a.strip()] if nearby_airports else None
 
-    serpapi_configured = bool(os.environ.get("SERPAPI_API_KEY") or load_serpapi_credentials())
+    settings = load_settings()
+    serpapi_configured = bool(settings.get("serpapi_api_key"))
 
     if not serpapi_configured:
         return templates.TemplateResponse("positioning.html", {
@@ -257,21 +251,16 @@ async def positioning_search(
 
 @app.get("/balances", response_class=HTMLResponse)
 async def get_balances(request: Request, user_id: Optional[str] = None):
-    api_key = os.environ.get("AWARDWALLET_API_KEY")
-    if not api_key:
-        try:
-            creds = AwardWalletClient._load_cred()
-            api_key = creds.get("api_key") if creds else None
-        except Exception:
-            api_key = None
+    settings = load_settings()
 
-    effective_user = user_id or os.environ.get("AWARDWALLET_USER_ID")
+    api_key = settings.get("awardwallet_api_key")
+    effective_user = user_id or settings.get("awardwallet_user_id")
 
     if not api_key or not effective_user:
         return templates.TemplateResponse("balances.html", {
             "request": request,
-            "error": "AwardWallet not configured. Set AWARDWALLET_API_KEY and AWARDWALLET_USER_ID environment variables.",
-            "user_id": None,
+            "error": "AwardWallet not configured. Add your API key in Settings.",
+            "user_id": effective_user,
             "balances": None,
         })
 
@@ -292,6 +281,43 @@ async def get_balances(request: Request, user_id: Optional[str] = None):
         "balances": summary,
         "error": None,
     })
+
+
+@app.get("/settings", response_class=HTMLResponse)
+async def get_settings_page(request: Request):
+    settings = load_settings()
+    configured = {
+        "seats_aero": bool(settings.get("seats_aero_api_key")),
+        "awardwallet": bool(settings.get("awardwallet_api_key") and settings.get("awardwallet_user_id")),
+        "serpapi": bool(settings.get("serpapi_api_key")),
+        "pushover": bool(settings.get("pushover_app_token") and settings.get("pushover_user_key")),
+    }
+    return templates.TemplateResponse("settings.html", {
+        "request": request,
+        "settings": settings,
+        "configured": configured,
+    })
+
+
+@app.post("/settings/save")
+async def save_settings_form(
+    request: Request,
+    seats_aero_api_key: str = Form(""),
+    awardwallet_api_key: str = Form(""),
+    awardwallet_user_id: str = Form(""),
+    serpapi_api_key: str = Form(""),
+    pushover_app_token: str = Form(""),
+    pushover_user_key: str = Form(""),
+):
+    save_settings({
+        "seats_aero_api_key": seats_aero_api_key,
+        "awardwallet_api_key": awardwallet_api_key,
+        "awardwallet_user_id": awardwallet_user_id,
+        "serpapi_api_key": serpapi_api_key,
+        "pushover_app_token": pushover_app_token,
+        "pushover_user_key": pushover_user_key,
+    })
+    return RedirectResponse(url="/settings?saved=1", status_code=303)
 
 
 @app.get("/alerts", response_class=HTMLResponse)

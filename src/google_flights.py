@@ -5,36 +5,11 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 import requests
-import yaml
 from loguru import logger
 
-SERPTAPI_CREDS_PATHS = [
-    Path("credentials/serpapi.yml"),
-    Path("credentials/serpapi.yaml"),
-    Path.home() / ".config" / "award-search" / "serpapi.yml",
-]
+from .settings import load_settings
 
 SERPA_API_BASE = "https://serpapi.com"
-
-
-def _find_credentials_file() -> Optional[Path]:
-    for path in SERPTAPI_CREDS_PATHS:
-        if path.exists():
-            return path
-    return None
-
-
-def load_serpapi_credentials() -> Optional[Dict[str, str]]:
-    if os.environ.get("SERPAPI_API_KEY"):
-        return {"api_key": os.environ["SERPAPI_API_KEY"]}
-
-    creds_file = _find_credentials_file()
-    if creds_file:
-        with open(creds_file) as f:
-            data = yaml.safe_load(f)
-        return {"api_key": data.get("api_key")}
-
-    return None
 
 
 CABIN_MAP = {
@@ -85,13 +60,13 @@ def _stops_from_segments(segments: int) -> int:
 
 class SerpApiClient:
     def __init__(self, api_key: Optional[str] = None):
-        creds = load_serpapi_credentials() if not api_key else None
-        self.api_key = api_key or (creds.get("api_key") if creds else None)
+        creds = load_settings() if not api_key else None
+        self.api_key = api_key or (creds.get("serpapi_api_key") if creds else None)
 
         if not self.api_key:
             raise ValueError(
                 "SerpAPI key not found. "
-                "Set SERPAPI_API_KEY env var or create credentials/serpapi.yml"
+                "Set SERPAPI_API_KEY env var or add in Settings page."
             )
 
     def search_flights(

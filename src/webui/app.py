@@ -20,6 +20,7 @@ from ..search.programs.base import load_programs_config
 from ..awardwallet import AwardWalletClient
 from ..seats_aero import SeatsAeroClient, SeatsAeroAvailability
 from ..pushover import PushoverClient, send_award_notification
+from ..google_flights import search_positioning_multi, SerpApiClient, load_serpapi_credentials
 
 
 search_results: Dict[str, Any] = {}
@@ -183,6 +184,74 @@ async def get_results(search_id: str, request: Request):
         "programs": programs,
         "selected_programs": [],
         "search_results": data,
+    })
+
+
+@app.get("/positioning", response_class=HTMLResponse)
+async def positioning_page(request: Request):
+    serpapi_configured = bool(os.environ.get("SERPAPI_API_KEY") or load_serpapi_credentials())
+
+    return templates.TemplateResponse("positioning.html", {
+        "request": request,
+        "serpapi_configured": serpapi_configured,
+    })
+
+
+@app.post("/positioning/search", response_class=HTMLResponse)
+async def positioning_search(
+    request: Request,
+    home_airport: str = Form(...),
+    target_hub: str = Form(...),
+    departure_date: str = Form(...),
+    cabin: str = Form("economy"),
+    nearby_airports: str = Form(""),
+):
+    departure = date.fromisoformat(departure_date)
+    nearby = [a.strip().upper() for a in nearby_airports.split(",") if a.strip()] if nearby_airports else None
+
+    serpapi_configured = bool(os.environ.get("SERPAPI_API_KEY") or load_serpapi_credentials())
+
+    if not serpapi_configured:
+        return templates.TemplateResponse("positioning.html", {
+            "request": request,
+            "serpapi_configured": False,
+            "error": "SerpAPI not configured. Set SERPAPI_API_KEY env var or create credentials/serpapi.yml",
+        })
+
+    result = search_positioning_multi(
+        origin=home_airport.upper(),
+        destination=target_hub.upper(),
+        departure_date=departure,
+        cabin=cabin.lower(),
+        nearby_origins=nearby,
+    )
+
+    flights_data = [
+        {
+            "airline": f.airline,
+            "flight_number": f.flight_number,
+            "origin": f.origin,
+            "destination": f.destination,
+            "departure_time": f.departure_time,
+            "arrival_time": f.arrival_time,
+            "duration_minutes": f.duration_minutes,
+            "stops": f.stops,
+            "price": f.price,
+            "currency": f.currency,
+            "booking_link": f.booking_link,
+        }
+        for f in result.flights
+    ]
+
+    return templates.TemplateResponse("positioning_results.html", {
+        "request": request,
+        "home_airport": home_airport.upper(),
+        "target_hub": target_hub.upper(),
+        "departure_date": departure_date,
+        "cabin": cabin,
+        "nearby_airports": nearby_airports,
+        "flights": flights_data,
+        "errors": result.errors,
     })
 
 

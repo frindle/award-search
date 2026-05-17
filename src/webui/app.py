@@ -65,7 +65,7 @@ app = FastAPI(title="Award Search", lifespan=lifespan)
 
 BASE_DIR = Path(__file__).parent.parent.parent
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
-templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "webui" / "templates"))
+templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "webui" / "templates"), autoescape=True)
 
 
 def _jinja2_format_number(value):
@@ -246,6 +246,9 @@ async def positioning_search(
     cabin: str = Form("economy"),
     nearby_airports: str = Form(""),
 ):
+    settings = load_settings()
+    serpapi_configured = bool(settings.get("serpapi_api_key"))
+
     try:
         departure = date.fromisoformat(departure_date)
     except ValueError:
@@ -255,9 +258,6 @@ async def positioning_search(
             "error": "Invalid date format. Use YYYY-MM-DD",
         })
     nearby = [a.strip().upper() for a in nearby_airports.split(",") if a.strip()] if nearby_airports else None
-
-    settings = load_settings()
-    serpapi_configured = bool(settings.get("serpapi_api_key"))
 
     if not serpapi_configured:
         return templates.TemplateResponse("positioning.html", {

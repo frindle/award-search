@@ -42,8 +42,12 @@ def load_settings() -> Dict:
             for key in settings:
                 if file_settings.get(key):
                     settings[key] = file_settings[key]
-        except Exception:
-            pass
+        except json.JSONDecodeError:
+            import warnings
+            warnings.warn("Settings file corrupted, ignoring")
+        except IOError:
+            import warnings
+            warnings.warn("Could not read settings file")
 
     return settings
 

@@ -176,7 +176,7 @@ class SeatsAeroClient:
 
                 cabins_avail[cabin] = item.get(key_avail, False)
                 cost_val = item.get(key_cost)
-                cabins_cost[cabin] = int(cost_val) if cost_val and str(cost_val).isdigit() else 0
+                cabins_cost[cabin] = int(str(cost_val).replace(",", "")) if cost_val else 0
                 cabins_seats[cabin] = item.get(key_seats, 0)
                 cabins_airlines[cabin] = item.get(key_airlines, [])
                 cabins_direct[cabin] = item.get(key_direct, False)

@@ -23,11 +23,15 @@ from ..awardwallet import AwardWalletClient
 from ..seats_aero import SeatsAeroClient, SeatsAeroAvailability
 from ..pushover import PushoverClient, send_award_notification
 from ..google_flights import search_positioning_multi, SerpApiClient
+from ..alerts import (
+    load_alerts, upsert_alert, run_alert_check, alert_scheduler,
+    delete_alert as remove_alert,
+)
+from ..deeplinks import flight_links, seats_aero_url
 from ..settings import load_settings, save_settings
 
 
 search_results: Dict[str, Any] = {}
-saved_alerts: Dict[str, Dict] = {}
 csrf_tokens: Dict[str, str] = {}
 
 def _generate_csrf_token(session_id: str) -> str:
@@ -75,10 +79,37 @@ def _validate_airport(code: str) -> str:
     return code
 
 
+def _alert_search(alert: Dict) -> List[Dict]:
+    return _search_seats_aero(
+        alert["origin"], alert["destination"], alert["departure_date"],
+        None, alert["cabin"], alert.get("programs") or [],
+    )
+
+
+def _alert_notify(alert: Dict, r: Dict) -> None:
+    send_award_notification(
+        origin=alert["origin"],
+        destination=alert["destination"],
+        date=r["date"],
+        program=r["source"],
+        miles=r["cost"],
+        cabin=alert["cabin"],
+        seats=r["seats"],
+        booking_url=seats_aero_url(alert["origin"], alert["destination"], r["date"], alert["cabin"]),
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("WebUI starting up")
+    settings = load_settings()
+    try:
+        interval = float(settings.get("alert_check_interval_hours") or 0) or None
+    except (TypeError, ValueError):
+        interval = None
+    task = asyncio.create_task(alert_scheduler(_alert_search, _alert_notify, interval))
     yield
+    task.cancel()
     logger.info("WebUI shutting down")
 
 
@@ -241,6 +272,7 @@ async def search(
         "selected_programs": selected_programs,
         "search_results": search_results[search_id],
         "csrf_token": csrf_token,
+        "external_links": flight_links(origin, destination, departure_date, cabin),
     })
     _set_session_cookie(response, session_id)
     return response
@@ -510,7 +542,7 @@ async def get_alerts(request: Request):
     csrf_error = request.query_params.get("error") == "csrf"
     response = templates.TemplateResponse("alerts.html", {
         "request": request,
-        "alerts": saved_alerts,
+        "alerts": load_alerts(),
         "csrf_token": csrf_token,
         "error": "Invalid request. Please try again." if csrf_error else None,
     })
@@ -533,13 +565,13 @@ async def create_alert(
     if not _verify_csrf_token(session_id, csrf_token):
         return templates.TemplateResponse("alerts.html", {
             "request": request,
-            "alerts": saved_alerts,
+            "alerts": load_alerts(),
             "error": "Invalid request",
             "csrf_token": _generate_csrf_token(session_id),
         })
     alert_id = f"alert_{uuid.uuid4().hex[:12]}"
 
-    saved_alerts[alert_id] = {
+    upsert_alert({
         "id": alert_id,
         "origin": origin.upper(),
         "destination": destination.upper(),
@@ -550,14 +582,15 @@ async def create_alert(
         "created_at": datetime.now().isoformat(),
         "last_checked": None,
         "last_results": None,
-    }
+        "notified_keys": [],
+    })
 
     session_id = _get_session_id(request)
     new_csrf_token = _generate_csrf_token(session_id)
 
     return templates.TemplateResponse("alerts.html", {
         "request": request,
-        "alerts": saved_alerts,
+        "alerts": load_alerts(),
         "message": f"Alert created for {origin.upper()} → {destination.upper()}",
         "csrf_token": new_csrf_token,
     })
@@ -569,39 +602,17 @@ async def check_alert(alert_id: str, request: Request, csrf_token: str = Form(""
     if not _verify_csrf_token(session_id, csrf_token):
         return templates.TemplateResponse("alerts.html", {
             "request": request,
-            "alerts": saved_alerts,
+            "alerts": load_alerts(),
             "error": "Invalid request",
             "csrf_token": _generate_csrf_token(session_id),
         })
 
-    if alert_id not in saved_alerts:
+    alerts = load_alerts()
+    if alert_id not in alerts:
         raise HTTPException(status_code=404, detail="Alert not found")
 
-    alert = saved_alerts[alert_id]
-
-    results = _search_seats_aero(
-        alert["origin"],
-        alert["destination"],
-        alert["departure_date"],
-        None,
-        alert["cabin"],
-        alert["programs"],
-    )
-
-    alert["last_checked"] = datetime.now().isoformat()
-    alert["last_results"] = results
-
-    if results and alert.get("notify_pushover"):
-        for r in results:
-            send_award_notification(
-                origin=alert["origin"],
-                destination=alert["destination"],
-                date=r["date"],
-                program=r["source"],
-                miles=r["cost"],
-                cabin=alert["cabin"],
-                seats=r["seats"],
-            )
+    alert = alerts[alert_id]
+    results = run_alert_check(alert, _alert_search, _alert_notify)
 
     return templates.TemplateResponse("alert_result.html", {
         "request": request,
@@ -616,16 +627,16 @@ async def delete_alert(alert_id: str, request: Request, csrf_token: str = Form("
     if not _verify_csrf_token(session_id, csrf_token):
         return RedirectResponse(url="/alerts?error=csrf", status_code=303)
 
-    if alert_id in saved_alerts:
-        del saved_alerts[alert_id]
+    remove_alert(alert_id)
     return RedirectResponse(url="/alerts", status_code=303)
 
 
 @app.get("/api/alerts/{alert_id}/results")
 async def get_alert_results(alert_id: str):
-    if alert_id not in saved_alerts:
+    alerts = load_alerts()
+    if alert_id not in alerts:
         raise HTTPException(status_code=404, detail="Alert not found")
-    return saved_alerts[alert_id].get("last_results", [])
+    return alerts[alert_id].get("last_results", [])
 
 
 

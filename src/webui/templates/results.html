@@ -157,6 +157,15 @@
         </div>
         {% endif %}
 
+        {% if external_links %}
+        <div class="card" style="margin-top: 1rem;">
+            <strong>Cross-check on other services:</strong>
+            {% for link in external_links %}
+            <a href="{{ link.url }}" target="_blank" rel="noopener" style="margin-left: 0.75rem;">{{ link.name }} ↗</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <div style="margin-top: 1rem;">
             <a href="/" class="btn">New Search</a>
             <button class="btn" onclick="document.getElementById('alert-form').style.display='block'">Create Alert</button>

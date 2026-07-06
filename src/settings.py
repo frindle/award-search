@@ -15,6 +15,7 @@ DEFAULT_SETTINGS = {
     "serpapi_api_key": "",
     "pushover_app_token": "",
     "pushover_user_key": "",
+    "alert_check_interval_hours": "6",
 }
 
 ENV_VAR_MAP = {
@@ -24,6 +25,7 @@ ENV_VAR_MAP = {
     "serpapi_api_key": "SERPAPI_API_KEY",
     "pushover_app_token": "PUSHOVER_APP_TOKEN",
     "pushover_user_key": "PUSHOVER_USER_KEY",
+    "alert_check_interval_hours": "ALERT_CHECK_INTERVAL_HOURS",
 }
 
 

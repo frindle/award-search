@@ -7,4 +7,5 @@ __pycache__/
 .pytest_cache/
 .env
 *.log
-.DS_Storedata/
+.DS_Store
+data/

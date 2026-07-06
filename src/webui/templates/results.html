@@ -172,6 +172,7 @@
                 {% for p in selected_programs %}
                 <input type="hidden" name="programs" value="{{ p }}">
                 {% endfor %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
                 <div class="form-row" style="margin-bottom: 1rem;">
                     <div>

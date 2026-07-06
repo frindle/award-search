@@ -43,7 +43,7 @@
         <div class="card" style="background: #fff3cd; border-color: #ffc107;">
             <strong>SerpAPI not configured</strong>
             <p>Positioning search requires a SerpAPI key. Get one at <a href="https://serpapi.com" target="_blank">serpapi.com</a> ($50/mo for 5,000 searches, free tier: 100/mo).</p>
-            <p>Set <code>SERPAPI_API_KEY</code> env var or create <code>credentials/serpapi.yml</code></p>
+            <p>Set <code>SERPAPI_API_KEY</code> env var or add it in <a href="/settings">Settings</a>.</p>
         </div>
         {% endif %}
 
@@ -55,6 +55,7 @@
             </div>
 
             <form action="/positioning/search" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <div class="form-row">
                     <div>
                         <label for="home_airport">Your Home Airport</label>

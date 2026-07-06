@@ -23,6 +23,13 @@ def _find_credentials_file() -> Optional[Path]:
 
 
 def load_pushover_credentials() -> Optional[Dict[str, str]]:
+    from .settings import load_settings
+    settings = load_settings()
+    app_token = settings.get("pushover_app_token")
+    user_key = settings.get("pushover_user_key")
+    if app_token and user_key:
+        return {"app_token": app_token, "user_key": user_key}
+
     if os.environ.get("PUSHOVER_APP_TOKEN") and os.environ.get("PUSHOVER_USER_KEY"):
         return {
             "app_token": os.environ["PUSHOVER_APP_TOKEN"],

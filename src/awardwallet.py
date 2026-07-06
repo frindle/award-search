@@ -24,6 +24,13 @@ def _find_credentials_file() -> Optional[Path]:
 
 
 def load_awardwallet_credentials() -> Optional[Dict[str, str]]:
+    from .settings import load_settings
+    settings = load_settings()
+    api_key = settings.get("awardwallet_api_key")
+    user_id = settings.get("awardwallet_user_id")
+    if api_key and user_id:
+        return {"api_key": api_key, "user_id": user_id}
+
     if os.environ.get("AWARDWALLET_API_KEY") and os.environ.get("AWARDWALLET_USER_ID"):
         return {
             "api_key": os.environ["AWARDWALLET_API_KEY"],

@@ -1,5 +1,6 @@
 import asyncio
 import os
+import secrets
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -27,15 +28,22 @@ from ..settings import load_settings, save_settings
 
 search_results: Dict[str, Any] = {}
 saved_alerts: Dict[str, Dict] = {}
+csrf_tokens: Dict[str, str] = {}
 
-CSRF_SECRET = os.environ.get("CSRF_SECRET", "change-me-in-production")
+def _generate_csrf_token(session_id: str) -> str:
+    token = secrets.token_hex(32)
+    # bound the store: drop oldest sessions past 1000 entries
+    while len(csrf_tokens) >= 1000:
+        csrf_tokens.pop(next(iter(csrf_tokens)))
+    csrf_tokens[session_id] = token
+    return token
 
 
-def _generate_csrf_token() -> str:
-    import hashlib
-    import time
-    token_data = f"{uuid.uuid4().hex}{time.time()}{CSRF_SECRET}"
-    return hashlib.sha256(token_data.encode()).hexdigest()
+def _verify_csrf_token(session_id: str, token: str) -> bool:
+    stored = csrf_tokens.get(session_id)
+    if not stored:
+        return False
+    return secrets.compare_digest(stored, token)
 
 MAX_RESULTS_AGE = timedelta(hours=24)
 
@@ -43,10 +51,14 @@ MAX_RESULTS_AGE = timedelta(hours=24)
 def _cleanup_old_results():
     """Remove results older than 24 hours."""
     cutoff = datetime.now() - MAX_RESULTS_AGE
-    to_delete = [
-        k for k, v in search_results.items()
-        if datetime.fromisoformat(v["timestamp"]) < cutoff
-    ]
+    to_delete = []
+    for k, v in search_results.items():
+        try:
+            ts = v.get("timestamp")
+            if ts and datetime.fromisoformat(ts) < cutoff:
+                to_delete.append(k)
+        except (ValueError, TypeError):
+            to_delete.append(k)
     for k in to_delete:
         del search_results[k]
 
@@ -131,9 +143,24 @@ async def search(
 ):
     _cleanup_old_results()
     search_id = _generate_search_id()
-    origin = _validate_airport(origin)
-    destination = _validate_airport(destination)
-    
+
+    try:
+        origin = _validate_airport(origin)
+        destination = _validate_airport(destination)
+    except ValueError as e:
+        return templates.TemplateResponse("results.html", {
+            "request": request,
+            "search_id": "",
+            "origin": origin.upper() if origin else "",
+            "destination": destination.upper() if destination else "",
+            "departure_date": departure_date,
+            "return_date": return_date,
+            "cabin": cabin,
+            "programs": get_programs(),
+            "selected_programs": selected_programs,
+            "search_results": {"errors": [str(e)]},
+        })
+
     try:
         departure = date.fromisoformat(departure_date)
         if return_date:
@@ -200,7 +227,9 @@ async def search(
         }
 
     programs = get_programs()
-    return templates.TemplateResponse("results.html", {
+    session_id = _get_session_id(request)
+    csrf_token = _generate_csrf_token(session_id)
+    response = templates.TemplateResponse("results.html", {
         "request": request,
         "search_id": search_id,
         "origin": origin.upper(),
@@ -211,7 +240,10 @@ async def search(
         "programs": programs,
         "selected_programs": selected_programs,
         "search_results": search_results[search_id],
+        "csrf_token": csrf_token,
     })
+    _set_session_cookie(response, session_id)
+    return response
 
 
 @app.get("/results/{search_id}", response_class=HTMLResponse)
@@ -221,7 +253,9 @@ async def get_results(search_id: str, request: Request):
 
     programs = get_programs()
     data = search_results[search_id]
-    return templates.TemplateResponse("results.html", {
+    session_id = _get_session_id(request)
+    csrf_token = _generate_csrf_token(session_id)
+    response = templates.TemplateResponse("results.html", {
         "request": request,
         "search_id": search_id,
         "origin": data["query"]["origin"],
@@ -232,18 +266,25 @@ async def get_results(search_id: str, request: Request):
         "programs": programs,
         "selected_programs": [],
         "search_results": data,
+        "csrf_token": csrf_token,
     })
+    _set_session_cookie(response, session_id)
+    return response
 
 
 @app.get("/positioning", response_class=HTMLResponse)
 async def positioning_page(request: Request):
     settings = load_settings()
     serpapi_configured = bool(settings.get("serpapi_api_key"))
-
-    return templates.TemplateResponse("positioning.html", {
+    session_id = _get_session_id(request)
+    csrf_token = _generate_csrf_token(session_id)
+    response = templates.TemplateResponse("positioning.html", {
         "request": request,
         "serpapi_configured": serpapi_configured,
+        "csrf_token": csrf_token,
     })
+    _set_session_cookie(response, session_id)
+    return response
 
 
 @app.post("/positioning/search", response_class=HTMLResponse)
@@ -254,7 +295,22 @@ async def positioning_search(
     departure_date: str = Form(...),
     cabin: str = Form("economy"),
     nearby_airports: str = Form(""),
+    csrf_token: str = Form(""),
 ):
+    session_id = _get_session_id(request)
+    if not _verify_csrf_token(session_id, csrf_token):
+        settings = load_settings()
+        serpapi_configured = bool(settings.get("serpapi_api_key"))
+        new_csrf = _generate_csrf_token(session_id)
+        response = templates.TemplateResponse("positioning.html", {
+            "request": request,
+            "serpapi_configured": serpapi_configured,
+            "error": "Invalid request. Please try again.",
+            "csrf_token": new_csrf,
+        })
+        _set_session_cookie(response, session_id)
+        return response
+
     settings = load_settings()
     serpapi_configured = bool(settings.get("serpapi_api_key"))
 
@@ -266,7 +322,27 @@ async def positioning_search(
             "serpapi_configured": serpapi_configured,
             "error": "Invalid date format. Use YYYY-MM-DD",
         })
-    nearby = [a.strip().upper() for a in nearby_airports.split(",") if a.strip()] if nearby_airports else None
+
+    try:
+        home_airport = _validate_airport(home_airport)
+        target_hub = _validate_airport(target_hub)
+    except ValueError:
+        return templates.TemplateResponse("positioning.html", {
+            "request": request,
+            "serpapi_configured": serpapi_configured,
+            "error": "Invalid airport code. Use 3-letter airport codes (e.g., JFK, LAX)",
+        })
+
+    nearby = None
+    if nearby_airports:
+        try:
+            nearby = [_validate_airport(a) for a in nearby_airports.split(",") if a.strip()]
+        except ValueError:
+            return templates.TemplateResponse("positioning.html", {
+                "request": request,
+                "serpapi_configured": serpapi_configured,
+                "error": "Invalid nearby airport code. Use 3-letter airport codes (e.g., MDW, SBN)",
+            })
 
     if not serpapi_configured:
         return templates.TemplateResponse("positioning.html", {
@@ -276,8 +352,8 @@ async def positioning_search(
         })
 
     result = search_positioning_multi(
-        origin=home_airport.upper(),
-        destination=target_hub.upper(),
+        origin=home_airport,
+        destination=target_hub,
         departure_date=departure,
         cabin=cabin.lower(),
         nearby_origins=nearby,
@@ -346,6 +422,23 @@ async def get_balances(request: Request, user_id: Optional[str] = None):
     })
 
 
+def _get_session_id(request: Request) -> str:
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        session_id = secrets.token_hex(16)
+    return session_id
+
+
+def _set_session_cookie(response, session_id: str):
+    response.set_cookie(
+        key="session_id",
+        value=session_id,
+        httponly=True,
+        samesite="lax",
+        max_age=86400 * 7,
+    )
+
+
 @app.get("/settings", response_class=HTMLResponse)
 async def get_settings_page(request: Request):
     settings = load_settings()
@@ -355,13 +448,16 @@ async def get_settings_page(request: Request):
         "serpapi": bool(settings.get("serpapi_api_key")),
         "pushover": bool(settings.get("pushover_app_token") and settings.get("pushover_user_key")),
     }
-    csrf_token = _generate_csrf_token()
-    return templates.TemplateResponse("settings.html", {
+    session_id = _get_session_id(request)
+    csrf_token = _generate_csrf_token(session_id)
+    response = templates.TemplateResponse("settings.html", {
         "request": request,
         "settings": settings,
         "configured": configured,
         "csrf_token": csrf_token,
     })
+    _set_session_cookie(response, session_id)
+    return response
 
 
 @app.post("/settings/save")
@@ -375,26 +471,51 @@ async def save_settings_form(
     pushover_app_token: str = Form(""),
     pushover_user_key: str = Form(""),
 ):
-    # Basic CSRF check - in production use starlette-csrf or similar
-    if len(csrf_token) != 64:
+    session_id = _get_session_id(request)
+    if not _verify_csrf_token(session_id, csrf_token):
         return RedirectResponse(url="/settings?error=csrf", status_code=303)
-    save_settings({
+
+    current = load_settings()
+    PRESERVE_PLACEHOLDERS = (
+        "Configured (enter new value to change)",
+        "Enter your Seats.aero API key",
+        "Enter your AwardWallet API key",
+        "Enter your SerpAPI key",
+        "Enter your Pushover app token",
+        "Enter your Pushover user key",
+    )
+    new_settings = {}
+    field_map = {
         "seats_aero_api_key": seats_aero_api_key,
         "awardwallet_api_key": awardwallet_api_key,
         "awardwallet_user_id": awardwallet_user_id,
         "serpapi_api_key": serpapi_api_key,
         "pushover_app_token": pushover_app_token,
         "pushover_user_key": pushover_user_key,
-    })
+    }
+    for key, val in field_map.items():
+        if val and val not in PRESERVE_PLACEHOLDERS:
+            new_settings[key] = val
+        elif current.get(key):
+            new_settings[key] = current.get(key)
+
+    save_settings(new_settings)
     return RedirectResponse(url="/settings?saved=1", status_code=303)
 
 
 @app.get("/alerts", response_class=HTMLResponse)
 async def get_alerts(request: Request):
-    return templates.TemplateResponse("alerts.html", {
+    session_id = _get_session_id(request)
+    csrf_token = _generate_csrf_token(session_id)
+    csrf_error = request.query_params.get("error") == "csrf"
+    response = templates.TemplateResponse("alerts.html", {
         "request": request,
         "alerts": saved_alerts,
+        "csrf_token": csrf_token,
+        "error": "Invalid request. Please try again." if csrf_error else None,
     })
+    _set_session_cookie(response, session_id)
+    return response
 
 
 @app.post("/alerts/create", response_class=HTMLResponse)
@@ -408,11 +529,13 @@ async def create_alert(
     notify_pushover: bool = Form(False),
     csrf_token: str = Form(""),
 ):
-    if len(csrf_token) != 64:
+    session_id = _get_session_id(request)
+    if not _verify_csrf_token(session_id, csrf_token):
         return templates.TemplateResponse("alerts.html", {
             "request": request,
             "alerts": saved_alerts,
             "error": "Invalid request",
+            "csrf_token": _generate_csrf_token(session_id),
         })
     alert_id = f"alert_{uuid.uuid4().hex[:12]}"
 
@@ -429,15 +552,28 @@ async def create_alert(
         "last_results": None,
     }
 
+    session_id = _get_session_id(request)
+    new_csrf_token = _generate_csrf_token(session_id)
+
     return templates.TemplateResponse("alerts.html", {
         "request": request,
         "alerts": saved_alerts,
         "message": f"Alert created for {origin.upper()} → {destination.upper()}",
+        "csrf_token": new_csrf_token,
     })
 
 
 @app.post("/alerts/{alert_id}/check", response_class=HTMLResponse)
-async def check_alert(alert_id: str, request: Request):
+async def check_alert(alert_id: str, request: Request, csrf_token: str = Form("")):
+    session_id = _get_session_id(request)
+    if not _verify_csrf_token(session_id, csrf_token):
+        return templates.TemplateResponse("alerts.html", {
+            "request": request,
+            "alerts": saved_alerts,
+            "error": "Invalid request",
+            "csrf_token": _generate_csrf_token(session_id),
+        })
+
     if alert_id not in saved_alerts:
         raise HTTPException(status_code=404, detail="Alert not found")
 
@@ -475,7 +611,11 @@ async def check_alert(alert_id: str, request: Request):
 
 
 @app.post("/alerts/{alert_id}/delete")
-async def delete_alert(alert_id: str):
+async def delete_alert(alert_id: str, request: Request, csrf_token: str = Form("")):
+    session_id = _get_session_id(request)
+    if not _verify_csrf_token(session_id, csrf_token):
+        return RedirectResponse(url="/alerts?error=csrf", status_code=303)
+
     if alert_id in saved_alerts:
         del saved_alerts[alert_id]
     return RedirectResponse(url="/alerts", status_code=303)

@@ -2,7 +2,9 @@ import asyncio
 from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass, field
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass

@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 import requests
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .settings import load_settings
 

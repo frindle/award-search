@@ -6,7 +6,9 @@ from typing import List, Optional, Dict, Any
 
 import requests
 import yaml
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 API_BASE = "https://seats.aero/partnerapi"
 

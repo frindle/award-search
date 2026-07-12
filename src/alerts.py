@@ -14,7 +14,9 @@ from pathlib import Path
 from threading import Lock
 from typing import Dict, List, Optional
 
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)

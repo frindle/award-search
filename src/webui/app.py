@@ -12,7 +12,9 @@ from fastapi import FastAPI, Form, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 import uvicorn
 
 from ..browser.manager import BrowserManager, BrowserConfig

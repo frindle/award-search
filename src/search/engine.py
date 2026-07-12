@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 import yaml
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 from tqdm.asyncio import tqdm_asyncio
 
 from .programs.base import (
@@ -118,7 +120,7 @@ class SearchEngine:
 
     @property
     def logger(self):
-        return logger.bind(component="SearchEngine")
+        return logger
 
 
 async def run_search(

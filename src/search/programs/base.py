@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import List, Optional, Dict, Any
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 
 import yaml
@@ -69,7 +71,7 @@ class ProgramAdapter(ABC):
         self.config = config
         self.page = page
         self.credentials = credentials or {}
-        self.logger = logger.bind(program=self.program_id)
+        self.logger = logger
 
     @property
     @abstractmethod

@@ -3,7 +3,9 @@ import requests
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 import yaml
 

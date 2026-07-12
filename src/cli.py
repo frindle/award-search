@@ -8,7 +8,9 @@ from typing import Optional, List
 
 import click
 import yaml
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .search import SearchEngine, load_programs_config, load_credentials
 from .search.programs.base import SearchQuery
@@ -16,9 +18,12 @@ from .awardwallet import load_balances, BalanceSummary, AwardWalletClient
 
 
 def setup_logging(verbose: bool = False):
-    logger.remove()
-    level = "DEBUG" if verbose else "INFO"
-    logger.add(sys.stderr, level=level, format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan> - <level>{message}</level>")
+    logging.basicConfig(
+        stream=sys.stderr,
+        level=logging.DEBUG if verbose else logging.INFO,
+        format="%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s - %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
 
 @click.group()

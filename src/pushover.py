@@ -4,7 +4,9 @@ from typing import Optional, Dict, Any
 
 import requests
 import yaml
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 PUSHOVER_API_URL = "https://api.pushover.net/1/messages.json"
 

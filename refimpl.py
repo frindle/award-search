@@ -38,10 +38,11 @@ def select_results(alert, results):
     kept = []
     for r in results:
         try:
-            if passes_filters(r, filters):
-                kept.append(r)
+            ok = passes_filters(r, filters)
         except Exception:
-            continue
+            ok = False
+        if ok:
+            kept.append(r)
     return kept
 
 

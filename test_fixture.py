@@ -70,8 +70,6 @@ def _search(alert):
     return [R1, R2]
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("filters keep only matching results, in original order",

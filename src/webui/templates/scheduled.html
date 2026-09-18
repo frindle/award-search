@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduled Searches - Award Search</title>
+    {% include "_sched_style.html" %}
+</head>
+<body>
+<div class="container">
+    <nav class="nav">
+        <a href="/">Search</a>
+        <a href="/balances">Balances</a>
+        <a href="/alerts">Alerts</a>
+        <a href="/scheduled" class="active">Scheduled</a>
+        <a href="/positioning">Positioning</a>
+        <a href="/settings">Settings</a>
+    </nav>
+
+    <h1>Scheduled Award Searches</h1>
+    <p class="hint" style="margin-bottom:1.25rem">
+        Each schedule runs on its own cadence and only alerts you for hits that match
+        your airline allowlist and stay under your points and taxes caps.
+    </p>
+
+    {% if request.query_params.get('saved') %}<div class="message">Schedule saved.</div>{% endif %}
+    {% if message %}<div class="message">{{ message }}</div>{% endif %}
+    {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+    {% if not seats_aero_configured|default(true) %}
+    <div class="warn-box">
+        Seats.aero API key is not configured — schedules will save but return no results.
+        Add it in <a href="/settings">Settings</a>.
+    </div>
+    {% endif %}
+
+    <p style="margin-bottom:1rem"><a href="/scheduled/new" class="btn">+ New scheduled search</a></p>
+
+    <div class="card">
+    {% if schedules %}
+        {% for sid, s in schedules.items() %}
+        <div class="sched-item">
+            <div>
+                <div class="sched-route">
+                    {{ s.name or (s.origins|join('/') ~ ' → ' ~ s.destinations|join('/')) }}
+                    {% if s.enabled %}<span class="badge badge-on">enabled</span>
+                    {% else %}<span class="badge badge-off">paused</span>{% endif %}
+                    {% if s.notify_pushover %}<span class="badge">Pushover</span>{% endif %}
+                </div>
+                <div class="sched-meta">
+                    <strong>{{ s.origins|join(', ') }}</strong> &rarr; <strong>{{ s.destinations|join(', ') }}</strong>
+                    &nbsp;|&nbsp; {{ s.cabins|join(', ') or 'any cabin' }}
+                    <br>
+                    {% for r in s.date_ranges %}<code>{{ r.start }}{% if r.end and r.end != r.start %} → {{ r.end }}{% endif %}</code> {% endfor %}
+                    {% if not s.date_ranges %}<em>no dates set</em>{% endif %}
+                    <br>
+                    Programs: {{ s.programs|join(', ') if s.programs else 'all' }}
+                    {% if s.transfer_partners %} &nbsp;|&nbsp; Transfer partners: {{ s.transfer_partners|join(', ') }}{% endif %}
+                    <br>
+                    Alert limits:
+                    {% if s.filters and s.filters.airlines %}<span class="badge badge-cap">airlines {{ s.filters.airlines|join(',') }}</span>{% endif %}
+                    {% if s.filters and s.filters.max_points is not none %}<span class="badge badge-cap">&le; {{ s.filters.max_points|formatnumber }} pts</span>{% endif %}
+                    {% if s.filters and s.filters.max_taxes is not none %}<span class="badge badge-cap">&le; ${{ s.filters.max_taxes }} taxes</span>{% endif %}
+                    {% if not s.filters or (not s.filters.airlines and s.filters.max_points is none and s.filters.max_taxes is none) %}
+                        <em>none — you'll be alerted on every hit</em>
+                    {% endif %}
+                    <br>
+                    Every {{ s.interval_hours }}h
+                    {% if s.last_checked %}&nbsp;|&nbsp; last checked {{ s.last_checked[:16] }}{% else %}&nbsp;|&nbsp; never run{% endif %}
+                    {% if s.last_hit_count is defined and s.last_hit_count is not none %}&nbsp;|&nbsp; {{ s.last_hit_count }} matching hit(s){% endif %}
+                </div>
+            </div>
+            <div class="actions">
+                <form action="/scheduled/{{ sid }}/run" method="post"><button class="btn btn-small">Run now</button></form>
+                <a class="btn btn-small btn-muted" href="/scheduled/{{ sid }}/edit">Edit</a>
+                <form action="/scheduled/{{ sid }}/toggle" method="post">
+                    <button class="btn btn-small btn-muted">{{ 'Pause' if s.enabled else 'Enable' }}</button>
+                </form>
+                <form action="/scheduled/{{ sid }}/delete" method="post">
+                    <button class="btn btn-small btn-danger" onclick="return confirm('Delete this scheduled search?')">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty">
+            <p>No scheduled searches yet.</p>
+            <p><a href="/scheduled/new">Create your first one</a></p>
+        </div>
+    {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Seats.aero airport / city / region group codes</h2>
+        <p class="hint" style="margin-bottom:0.75rem">
+            Use any of these in the origin or destination field instead of a single airport —
+            the schedule expands the group into its airports when it runs.
+        </p>
+        <table>
+            <thead><tr><th>Code</th><th>Name</th><th>Airports</th></tr></thead>
+            <tbody>
+            {% for g in groups %}
+            <tr><td><code>{{ g.code }}</code></td><td>{{ g.name }}</td><td class="hint">{{ g.airports|join(', ') }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

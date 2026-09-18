@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'New' if mode == 'new' else 'Edit' }} Scheduled Search - Award Search</title>
+    {% include "_sched_style.html" %}
+</head>
+<body>
+<div class="container">
+    <nav class="nav">
+        <a href="/">Search</a>
+        <a href="/balances">Balances</a>
+        <a href="/alerts">Alerts</a>
+        <a href="/scheduled" class="active">Scheduled</a>
+        <a href="/positioning">Positioning</a>
+        <a href="/settings">Settings</a>
+    </nav>
+
+    <h1>{{ 'New scheduled search' if mode == 'new' else 'Edit scheduled search' }}</h1>
+
+    {% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+
+    <form action="/scheduled/save" method="post">
+    <input type="hidden" name="sched_id" value="{{ schedule.id if mode == 'edit' else '' }}">
+
+    <div class="card">
+        <h2>What to search</h2>
+        <div class="field">
+            <label>Name <span class="hint">— just for you</span></label>
+            <input type="text" name="name" value="{{ schedule.name or '' }}" placeholder="Bay Area to Tokyo, spring">
+        </div>
+        <div class="row">
+            <div class="field">
+                <label>Origins <span class="hint">— airport or group codes, comma separated</span></label>
+                <input type="text" name="origins" value="{{ schedule.origins|join(', ') }}" placeholder="QBA, LAX">
+            </div>
+            <div class="field">
+                <label>Destinations <span class="hint">— airport or group codes</span></label>
+                <input type="text" name="destinations" value="{{ schedule.destinations|join(', ') }}" placeholder="TYO, ASA">
+            </div>
+        </div>
+        <p class="hint">
+            Group codes expand to whole cities / regions / airline hub sets —
+            e.g. <code>QBA</code> = SFO+SJC+OAK, <code>EUR</code> = 18 large European airports.
+            The full list is at the bottom of the <a href="/scheduled">schedules page</a>.
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>Dates</h2>
+        <p class="hint" style="margin-bottom:0.75rem">Add one or more date ranges. Leave the end date blank for a single day.</p>
+        <div id="dateRows">
+            {% if schedule.date_ranges %}
+                {% for r in schedule.date_ranges %}
+                <div class="daterow">
+                    <input type="date" name="range_start" value="{{ r.start }}">
+                    <span class="hint">to</span>
+                    <input type="date" name="range_end" value="{{ r.end or '' }}">
+                    <button type="button" class="btn btn-small btn-danger" onclick="this.parentNode.remove()">×</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="daterow">
+                    <input type="date" name="range_start">
+                    <span class="hint">to</span>
+                    <input type="date" name="range_end">
+                    <button type="button" class="btn btn-small btn-danger" onclick="this.parentNode.remove()">×</button>
+                </div>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-small btn-muted" onclick="addDateRow()">+ Add date range</button>
+    </div>
+
+    <div class="card">
+        <h2>Cabins</h2>
+        <div class="checks">
+            {% for c in ['economy', 'premium', 'business', 'first'] %}
+            <label><input type="checkbox" name="cabins" value="{{ c }}"
+                   {% if c in schedule.cabins %}checked{% endif %}> {{ c|capitalize }}</label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Award programs <span class="hint">— leave all unchecked to search every program</span></h2>
+        <div class="checks">
+            {% for p in programs %}
+            <label><input type="checkbox" name="programs" value="{{ p.id }}"
+                   {% if p.id in schedule.programs %}checked{% endif %}> {{ p.name }}</label>
+            {% endfor %}
+        </div>
+
+        <h2>Transfer partners <span class="hint">— adds every program the card points transfer into</span></h2>
+        <div class="checks">
+            {% for tp in partners %}
+            <label title="{{ tp.programs|join(', ') }}">
+                <input type="checkbox" name="transfer_partners" value="{{ tp.id }}"
+                       {% if tp.id in schedule.transfer_partners %}checked{% endif %}> {{ tp.name }}</label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Alert limits <span class="hint">— the search runs fully; you're only notified for hits matching these</span></h2>
+        <div class="field">
+            <label>Airline allowlist <span class="hint">— IATA codes, comma separated. Blank = any airline.</span></label>
+            <input type="text" name="airlines" value="{{ (schedule.filters.airlines or [])|join(', ') }}" placeholder="NH, UA, LH, SQ">
+        </div>
+        <div class="row">
+            <div class="field">
+                <label>Max points <span class="hint">— blank = no cap</span></label>
+                <input type="text" name="max_points"
+                       value="{{ schedule.filters.max_points if schedule.filters.max_points is not none else '' }}"
+                       placeholder="90000">
+            </div>
+            <div class="field">
+                <label>Max taxes / fees <span class="hint">— blank = no cap</span></label>
+                <input type="text" name="max_taxes"
+                       value="{{ schedule.filters.max_taxes if schedule.filters.max_taxes is not none else '' }}"
+                       placeholder="100">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Schedule &amp; notification</h2>
+        <div class="row">
+            <div class="field">
+                <label>Run every (hours)</label>
+                <input type="number" name="interval_hours" min="1" step="1" value="{{ schedule.interval_hours or 6 }}">
+            </div>
+            <div class="field">
+                <label>&nbsp;</label>
+                <label style="font-weight:400">
+                    <input type="checkbox" name="notify_pushover" value="true"
+                           {% if schedule.notify_pushover %}checked{% endif %}> Send Pushover alerts
+                </label>
+                <label style="font-weight:400">
+                    <input type="checkbox" name="enabled" value="true"
+                           {% if schedule.enabled or mode == 'new' %}checked{% endif %}> Enabled
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <p>
+        <button type="submit" class="btn">Save schedule</button>
+        <a href="/scheduled" class="btn btn-muted">Cancel</a>
+    </p>
+    </form>
+</div>
+
+<script>
+function addDateRow() {
+    var rows = document.getElementById('dateRows');
+    var div = document.createElement('div');
+    div.className = 'daterow';
+    div.innerHTML = '<input type="date" name="range_start">' +
+                    '<span class="hint">to</span>' +
+                    '<input type="date" name="range_end">' +
+                    '<button type="button" class="btn btn-small btn-danger">×</button>';
+    div.querySelector('button').addEventListener('click', function () { div.remove(); });
+    rows.appendChild(div);
+}
+</script>
+</body>
+</html>

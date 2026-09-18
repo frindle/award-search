@@ -120,8 +120,6 @@ def _get(base, path):
 
 BASE = None  # set in __main__ before main() runs
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("GET /api/scheduled/partners -> 200 with all partners sorted by code",

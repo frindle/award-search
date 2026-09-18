@@ -70,6 +70,9 @@ def _search(alert):
     return [R1, R2]
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("filters keep only matching results, in original order",
      lambda: target.select_results({"id": "a1", "filters": {"cabin": "business"}}, [R2, R1, R3]),

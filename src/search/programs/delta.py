@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .base import SearchQuery, AwardResult, AwardSegment, AwardPrice, ProgramAdapter
+from .base import SearchQuery, AwardResult, AwardSegment, AwardPrice, ProgramAdapter, ProgramRegistry
 
 
 class DeltaAdapter(ProgramAdapter):

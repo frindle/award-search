@@ -25,6 +25,7 @@ Then open http://localhost:8000
 | Feature | Description |
 |---------|-------------|
 | **Seats.aero Search** | Award availability across 27 programs via API |
+| **Scheduled Searches** | Recurring searches by date range, airport/city/region group code, program and card transfer partner — with alerts limited by airline allowlist and points/taxes caps |
 | **AwardWallet Balances** | View your mileage/points balances |
 | **Positioning Flights** | Find cheap flights to your hub via Google Flights |
 | **Alert Notifications** | Pushover alerts when award space opens |
@@ -56,7 +57,39 @@ Files are searched in order:
 - `/` - Search awards
 - `/balances` - View AwardWallet balances
 - `/alerts` - Manage award alerts
+- `/scheduled` - Create/list/edit/delete **scheduled** award searches + alert filters
 - `/positioning` - Search positioning flights
+
+## Scheduled Searches
+
+`/scheduled` is the front-end for recurring award-availability searches.
+
+**What you can schedule**
+
+| Field | Notes |
+|---|---|
+| Dates | One or more date **ranges** (leave the end blank for a single day). Past ranges are dropped; a range that started in the past is clamped to today. |
+| Origins / Destinations | Plain IATA codes **or** seats.aero **group codes** — city (`NYC`, `LON`, `TYO`), region (`CAL`, `EUR`, `WST`) or airline-hub sets (`UAH`, `DLL`, `AAH`). The full table is rendered at the bottom of `/scheduled`, and served as JSON at `/api/airport-groups`. |
+| Cabins | economy / premium / business / first |
+| Programs | Any of the seats.aero loyalty programs |
+| Transfer partners | Amex MR, Chase UR, Citi TYP, Capital One, Bilt, Wells Fargo, Marriott — each expands to every program those points transfer into. JSON at `/api/transfer-partners`. |
+| Interval | Per-schedule cadence in hours |
+
+**Alert limits** — the search runs in full, but you are only *notified* for hits that
+satisfy all of the limits you set (each is optional and independent):
+
+- **Airline allowlist** — IATA codes; a hit must be operated by at least one of them
+- **Max points** — inclusive cap on the award cost
+- **Max taxes/fees** — inclusive cap. Taxes are not in the seats.aero `/search`
+  response, so a schedule with a taxes cap hydrates surviving candidates via
+  `/trips/{id}`; without a cap that extra call is skipped.
+
+Schedules persist to `data/scheduled_searches.json`. A background loop wakes every
+15 minutes and runs only the schedules whose own interval is due; new hits (deduped
+per route+date+program+cabin+cost) fire a Pushover notification.
+
+`/api/scheduled/{id}/preview` returns the expanded query legs so you can see how many
+seats.aero calls a schedule costs before enabling it.
 
 ## CLI Usage
 

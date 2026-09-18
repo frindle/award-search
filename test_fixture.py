@@ -36,8 +36,14 @@ spec.loader.exec_module(target)
 CASES = [
     # happy path: a real group code
     ("NYC is a known airport group", lambda: target.is_group("NYC"), True),
+    # EVERY known group code must be recognised, not just one. A fixture that
+    # checks only NYC lets a mutation of the LON/PAR keys survive -- the exact
+    # defect the relevance gate flagged.
+    ("LON is a known airport group", lambda: target.is_group("LON"), True),
+    ("PAR is a known airport group", lambda: target.is_group("PAR"), True),
     # case-insensitivity: an exact-match-only impl fails this
     ("group codes are case-insensitive (nyc)", lambda: target.is_group("nyc"), True),
+    ("group codes are case-insensitive (par)", lambda: target.is_group("par"), True),
     # whitespace tolerance: an impl that skips .strip() fails this
     ("surrounding whitespace is ignored", lambda: target.is_group("  NYC "), True),
     # a single-airport code must NOT be a group -- catches "any known airport"

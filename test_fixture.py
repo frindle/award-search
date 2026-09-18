@@ -42,8 +42,6 @@ def _q(ranges, **overrides):
     return q
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("empty search returns the full default query",

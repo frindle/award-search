@@ -71,6 +71,9 @@ target.__path__ = []                    # mark as package: relative imports reso
 spec.loader.exec_module(target)
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("happy path: total_taxes is float(cents/100), currency+carriers pass through",
      lambda: (lambda t: (t.total_taxes, type(t.total_taxes).__name__,

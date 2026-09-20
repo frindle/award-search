@@ -30,8 +30,6 @@ if "def search_schedule(" in t:
 ADD = """
 
 def search_schedule(sched: Dict, client=None, today=None) -> List[Dict]:
-    if client is None:
-        client = SeatsAeroClient()
     s = sched or {}
     return list(client.search(
         s.get("origin"),

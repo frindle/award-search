@@ -25,8 +25,10 @@ Contract:
   Read its legs defensively with .get(): origin, destination, start_date,
   end_date, cabins, programs. Missing keys become None -- never raise KeyError.
 - `client` is an injected search client exposing search(origin, destination,
-  start_date=None, end_date=None, cabins=None, programs=None). When client is
-  None, construct SeatsAeroClient() (already imported in this module) and use it.
+  start_date=None, end_date=None, cabins=None, programs=None). This slice only
+  covers the injected-client path; defaulting a None client to SeatsAeroClient()
+  is a SEPARATE slice's contract (s11-client-none-seatsaerocli) and must NOT be
+  duplicated here -- just forward client.search(...) as given.
 - Forward the six legs positionally to client.search(...) exactly as read from
   sched, and return its result as a list of dicts. Do not wrap or filter the
   results; do not swallow exceptions raised by the client -- let them propagate.

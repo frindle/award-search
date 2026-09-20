@@ -1,6 +1,7 @@
 from .alert_filters import passes_filters
 from .deeplinks import seats_aero_url
 from .pushover import send_award_notification
+from .seats_aero import SeatsAeroClient
 from .scheduled_searches import effective_programs, is_due, load_schedules, query_legs, upsert_schedule
 
 

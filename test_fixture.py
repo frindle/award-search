@@ -51,8 +51,6 @@ assert "Dict" in vars(target), \
     "target module does not bind 'Dict' in its own namespace (missing typing import)"
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("full record -> canonical pipe-joined key program|origin|destination|date|cabin",

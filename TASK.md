@@ -66,7 +66,10 @@ test_fixture.py is the test fixture -- changing it invalidates the check.
 The five `_result_key` cases in `test_fixture.py` exercise: the full canonical
 key, `{}`, a partial dict with only one key present, non-string values coerced
 via `str()`, and the return type being `str`. Every line of the new function is
-therefore asserted by at least one case.
+therefore asserted by at least one case. The fixture also asserts that the
+module binds `Dict` in its own namespace after exec (the annotation is
+evaluated against module globals), so the added `from typing import Dict`
+import line is exercised too -- removing it fails the verify.
 
 ## Loop instruction
 

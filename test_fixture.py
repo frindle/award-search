@@ -43,6 +43,13 @@ target.__package__ = "target"
 target.__path__ = []                    # mark as package: relative imports resolve via sys.modules
 spec.loader.exec_module(target)
 
+# The `from typing import Dict` line must have executed and bound the name in
+# the module's own namespace (the annotation is evaluated at def time against
+# the module globals). If that import line were removed, this fails -- even if
+# some other module happened to leave a `Dict` reachable elsewhere.
+assert "Dict" in vars(target), \
+    "target module does not bind 'Dict' in its own namespace (missing typing import)"
+
 
 CASES = [
     ("full record -> canonical pipe-joined key program|origin|destination|date|cabin",

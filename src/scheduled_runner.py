@@ -1,4 +1,5 @@
 from .alert_filters import passes_filters
+from .deeplinks import seats_aero_url
 
 
 def select_results(alert, results):

@@ -33,3 +33,21 @@ def run_cycle(alerts, search_fn):
 def search_seats_aero(origin, destination, start_date=None, end_date=None, cabins=None, programs=None):
     client = SeatsAeroClient()
     return client.search(origin, destination, start_date, end_date, cabins, programs)
+
+
+class _TripView:
+    def __init__(self, total_taxes, taxes_currency, carriers):
+        self.total_taxes = total_taxes
+        self.taxes_currency = taxes_currency
+        self.carriers = carriers
+
+
+def get_trip(availability_id):
+    try:
+        client = SeatsAeroClient()
+        trip = client.get_trip(availability_id)
+    except Exception:
+        return None
+    if trip is None:
+        return None
+    return _TripView(float(trip.total_taxes) / 100.0, trip.taxes_currency, list(trip.carriers))

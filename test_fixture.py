@@ -77,8 +77,6 @@ target.__package__ = "src"
 spec.loader.exec_module(target)
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("imported name is reachable on the target module",

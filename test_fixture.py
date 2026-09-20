@@ -62,6 +62,17 @@ for _code, _entry in GROUPS.items():
         _entry["name"],
     ))
 
+# The spec's canonical groups are pinned by name AND label: a table that
+# renames "JFK" -> "JFK_X" (or relabels it) would still pass the data-driven
+# loop above, because both sides of the lookup move together. These cases pin
+# the exact code->label pairs from TASK.md so such drift is caught.
+CASES -= [
+    ("canonical group 'JFK' resolves to exactly 'New York (JFK)'",
+     lambda: target.group_label("JFK"), "New York (JFK)"),
+    ("canonical group 'LHR' resolves to exactly 'London (LHR)'",
+     lambda: target.group_label("LHR"), "London (LHR)"),
+]
+
 CASES += [
     # Unknown code falls through to the code itself and must NOT raise.
     ("unknown code is returned unchanged",

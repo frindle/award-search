@@ -1,3 +1,5 @@
+from typing import Dict
+
 from .alert_filters import passes_filters
 from .deeplinks import seats_aero_url
 from .pushover import send_award_notification
@@ -51,3 +53,13 @@ def get_trip(availability_id):
     if trip is None:
         return None
     return _TripView(float(trip.total_taxes) / 100.0, trip.taxes_currency, list(trip.carriers))
+
+
+def _result_key(r: Dict) -> str:
+    return "|".join([
+        str((r or {}).get("program", "")),
+        str((r or {}).get("origin", "")),
+        str((r or {}).get("destination", "")),
+        str((r or {}).get("date", "")),
+        str((r or {}).get("cabin", "")),
+    ])

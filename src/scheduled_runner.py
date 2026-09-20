@@ -28,3 +28,8 @@ def run_cycle(alerts, search_fn):
         if kept:
             out[alert_id] = kept
     return out
+
+
+def search_seats_aero(origin, destination, start_date=None, end_date=None, cabins=None, programs=None):
+    client = SeatsAeroClient()
+    return client.search(origin, destination, start_date, end_date, cabins, programs)

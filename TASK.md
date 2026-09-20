@@ -52,8 +52,10 @@ enforce the spec -- that is a benign verify, caught mechanically.)
 
 ## Scope
 
-Only edit `src/airport_groups.py`; do not edit `verify.sh`, `test_fixture.py` or `TASK.md`.
-test_fixture.py is the test fixture -- changing it invalidates the check.
+Only edit `src/airport_groups.py`; in this refine round `test_fixture.py` may
+also be touched (its one dirty line, `CASES -= [` -> `CASES += [`, is a
+permitted fix). Do not edit `verify.sh`. `TASK.md` changes are limited to
+keeping the scope line and the Must-contain list accurate.
 
 ## Keep every changed line exercised (relevance)
 

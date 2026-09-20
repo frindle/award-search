@@ -66,7 +66,7 @@ for _code, _entry in GROUPS.items():
 # renames "JFK" -> "JFK_X" (or relabels it) would still pass the data-driven
 # loop above, because both sides of the lookup move together. These cases pin
 # the exact code->label pairs from TASK.md so such drift is caught.
-CASES -= [
+CASES += [
     ("canonical group 'JFK' resolves to exactly 'New York (JFK)'",
      lambda: target.group_label("JFK"), "New York (JFK)"),
     ("canonical group 'LHR' resolves to exactly 'London (LHR)'",

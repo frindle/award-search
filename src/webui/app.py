@@ -31,6 +31,7 @@ from ..alerts import (
 )
 from ..deeplinks import flight_links, seats_aero_url
 from ..settings import load_settings, save_settings
+from . import scheduled_routes
 
 
 search_results: Dict[str, Any] = {}

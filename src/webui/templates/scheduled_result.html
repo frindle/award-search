@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run result - Award Search</title>
+    {% include "_sched_style.html" %}
+</head>
+<body>
+<div class="container">
+    <nav class="nav">
+        <a href="/">Search</a>
+        <a href="/balances">Balances</a>
+        <a href="/alerts">Alerts</a>
+        <a href="/scheduled" class="active">Scheduled</a>
+        <a href="/positioning">Positioning</a>
+        <a href="/settings">Settings</a>
+    </nav>
+
+    <h1>{{ schedule.name or (schedule.origins|join('/') ~ ' → ' ~ schedule.destinations|join('/')) }}</h1>
+    <p class="hint" style="margin-bottom:1.25rem">
+        Ran just now. These are the hits that passed your alert limits.
+    </p>
+
+    <div class="card">
+    {% if results %}
+        <table>
+            <thead>
+            <tr><th>Date</th><th>Route</th><th>Cabin</th><th>Program</th><th>Airlines</th>
+                <th>Points</th><th>Taxes</th><th>Seats</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for r in results %}
+            <tr>
+                <td>{{ r.date }}</td>
+                <td>{{ r.origin }} → {{ r.destination }}</td>
+                <td>{{ r.cabin }}</td>
+                <td>{{ r.source }}</td>
+                <td>{{ (r.airlines or [])|join(', ') }}</td>
+                <td>{{ r.cost|formatnumber }}</td>
+                <td>{% if r.taxes is not none %}${{ '%.2f'|format(r.taxes) }}{% else %}&mdash;{% endif %}</td>
+                <td>{{ r.seats }}{% if r.direct %} <span class="badge badge-on">direct</span>{% endif %}</td>
+                <td>{% if r.booking_url %}<a class="btn btn-small" href="{{ r.booking_url }}" target="_blank" rel="noopener">Open</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty">
+            <p>No availability matched this schedule's alert limits.</p>
+            <p class="hint">Either nothing is open, or every hit was over your points/taxes cap
+               or outside your airline allowlist.</p>
+        </div>
+    {% endif %}
+    </div>
+
+    <p><a href="/scheduled" class="btn btn-muted">← Back to scheduled searches</a></p>
+</div>
+</body>
+</html>

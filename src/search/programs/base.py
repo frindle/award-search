@@ -130,7 +130,7 @@ class ProgramRegistry:
 
 def load_programs_config(config_path: Path = None) -> Dict[str, Any]:
     if config_path is None:
-        config_path = Path(__file__).parent.parent.parent / "config" / "programs.yml"
+        config_path = Path(__file__).parent.parent.parent.parent / "config" / "programs.yml"
 
     with open(config_path, "r") as f:
         data = yaml.safe_load(f)

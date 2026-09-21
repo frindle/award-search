@@ -82,8 +82,6 @@ def _home_regression():
     return (r.status_code, "Award Search" in r.text)
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     # Discriminator: with include_router(scheduled_routes.router) present, the

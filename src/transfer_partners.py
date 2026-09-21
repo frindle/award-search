@@ -28,3 +28,10 @@ def programs_for_partners(partner_ids: Iterable[str]) -> List[str]:
     ids = set(partner_ids)
     pass
     return sorted(names)
+
+
+def partners_for_program(program: str) -> List[str]:
+    info = PROGRAMS.get(program)
+    if info is None:
+        return []
+    return sorted(info['transfers_to'])

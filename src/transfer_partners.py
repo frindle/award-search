@@ -8,4 +8,6 @@ PROGRAMS = {
     "bilt": {"name": "Bilt Rewards",
              "transfers_to": ["air_canada", "american", "emirates", "flying_blue", "turkish",
                               "united", "virgin_atlantic", "alaska"]},
+    "wells_fargo": {"name": "Wells Fargo Rewards",
+                    "transfers_to": ["air_canada", "flying_blue", "virgin_atlantic"]},
 }

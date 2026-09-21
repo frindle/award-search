@@ -18,13 +18,18 @@ fails=0
 # system python3 (which may already have the needed packages via `pip install
 # --user`). Track the install's own exit code and blow the venv away on
 # failure so the fallback below actually fires.
+#
+# 2026-09-21: the FULL requirements.txt pulls in playwright, whose pinned
+# greenlet==3.0.3 fails to build against Python 3.14's internal frame ABI --
+# a real, unrelated-to-this-task env break. This fixture only needs the
+# FastAPI/Jinja2 stack (playwright is for a different part of the app), so
+# install that minimal set directly instead of the full requirements.txt.
 PY=.venv/bin/python
 if [ ! -x "$PY" ]; then
-  if [ -f requirements.txt ]; then
-    python3 -m venv .venv >/dev/null 2>&1 \
-      && .venv/bin/pip install -q -r requirements.txt >/dev/null 2>&1 \
-      || rm -rf .venv
-  fi
+  python3 -m venv .venv >/dev/null 2>&1 \
+    && .venv/bin/pip install -q fastapi==0.109.2 jinja2==3.1.3 \
+         python-multipart==0.0.9 uvicorn==0.27.1 httpx >/dev/null 2>&1 \
+    || rm -rf .venv
 fi
 [ -x "$PY" ] || PY=python3
 

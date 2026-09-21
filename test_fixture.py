@@ -127,6 +127,19 @@ def case_no_hits_absent():
     return "ok"
 
 
+def case_non_dict_entry_in_kept_list():
+    # A non-dict entry that survives select_results (None passes the stubbed
+    # filter) must be skipped by enrichment without raising, and the dict hit
+    # alongside it must still get its booking_url. Any mutant that drops or
+    # inverts the isinstance guard calls .get() on None -> AttributeError.
+    out = target.run_cycle({"a5": {"filters": {}}}, lambda alert: [None, dict(HIT1)])
+    dicts = [r for r in out["a5"] if isinstance(r, dict)]
+    assert any(d.get("booking_url") == URL1 for d in dicts), (
+        "dict hit alongside a non-dict entry must still get its own booking_url"
+    )
+    return "ok"
+
+
 def case_raising_search_skipped_others_kept():
     def search_fn(alert):
         if alert.get("tag") == "boom":
@@ -145,6 +158,7 @@ CASES = [
     ("each of multiple hits gets a distinct URL (no shared/constant URL)", case_each_hit_own_url, "ok"),
     ("hit missing the cabin key still gets a valid booking_url", case_missing_cabin_key, "ok"),
     ("alert with no surviving hits stays absent from output", case_no_hits_absent, "ok"),
+    ("non-dict entry in kept list is skipped without raising; dict hit still enriched", case_non_dict_entry_in_kept_list, "ok"),
     ("raising search_fn skips that alert but keeps processing others", case_raising_search_skipped_others_kept, "ok"),
 ]
 

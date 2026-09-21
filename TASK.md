@@ -48,8 +48,8 @@ enforce the spec -- that is a benign verify, caught mechanically.)
 
 ## Scope
 
-Only edit `src/scheduled_runner.py`; do not edit `verify.sh`, `test_fixture.py` or `TASK.md`.
-test_fixture.py is the test fixture -- changing it invalidates the check.
+Only edit `src/scheduled_runner.py` (the fix) and `test_fixture.py` (add adversarial cases); do not edit `verify.sh` or `TASK.md`.
+test_fixture.py is the test fixture -- only ADD adversarial cases there, never weaken existing ones.
 
 ## Keep every changed line exercised (relevance)
 

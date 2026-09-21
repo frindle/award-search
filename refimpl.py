@@ -49,7 +49,7 @@ def run_cycle(alerts, search_fn):
         kept = select_results(alert or {}, results)
         if kept:
             _enrich_booking_urls(kept)
-            out[alert_id] = [dict(r) for r in kept]
+            out[alert_id] = [dict(r) if isinstance(r, dict) else r for r in kept]
     return out"""
 
 assert OLD in t, "refimpl anchor not found -- did the target change?"

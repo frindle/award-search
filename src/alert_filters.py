@@ -48,3 +48,14 @@ def passes_filters(result: Dict, filters: Optional[Dict]) -> bool:
 
 def filter_results(results: Iterable[Dict], filters: Optional[Dict]) -> List[Dict]:
     return [result for result in results if passes_filters(result, filters)]
+
+
+def describe_filters(filters: Optional[Dict]) -> str:
+    """Render a filter dict as a short human summary, e.g. 'airlines UA,NH'."""
+    if not filters:
+        return "(no filters)"
+    parts = []
+    for key, value in filters.items():
+        codes = ",".join(normalize_airlines(value))
+        parts.append("{} {}".format(key, codes) if codes else key)
+    return "; ".join(parts)

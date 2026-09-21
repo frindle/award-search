@@ -12,6 +12,18 @@ class RunRequest(BaseModel):
 
 router = APIRouter(prefix="/api/scheduled")
 
+TEMPLATES = []
+
+
+def init(templates):
+    global TEMPLATES
+    TEMPLATES = templates
+
+
+@router.get("/templates")
+def scheduled_templates():
+    return {"templates": TEMPLATES}
+
 
 @router.get("/partners")
 def scheduled_partners():

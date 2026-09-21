@@ -11,3 +11,13 @@ PROGRAMS = {
     "wells_fargo": {"name": "Wells Fargo Rewards",
                     "transfers_to": ["air_canada", "flying_blue", "virgin_atlantic"]},
 }
+
+from typing import Dict, List
+
+
+def list_partners() -> List[Dict]:
+    partners = [
+        {"id": slug, "name": info["name"], "programs": info["transfers_to"]}
+        for slug, info in PROGRAMS.items()
+    ]
+    return sorted(partners, key=lambda partner: partner["name"])

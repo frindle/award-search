@@ -156,6 +156,35 @@ def _case_malformed_store():
     return (r_dict_no_key.status_code, r_bad_type.status_code)
 
 
+def _case_run():
+    # /run must actually execute the search-and-persist path (not just the
+    # unknown-id short-circuit already covered above): last_checked and
+    # last_hit_count get written back, and the page renders without a 500
+    # regardless of whether the seats.aero client is reachable.
+    c = TestClient(app_module.app, follow_redirects=False)
+    target.STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if target.STORE_PATH.exists():
+        target.STORE_PATH.unlink()
+
+    c.post("/scheduled/save", data={
+        "origins": "JFK", "destinations": "LAX",
+        "date_ranges": "2026-06-01",
+        "interval_hours": "6",
+    })
+    sid = target._load_schedules()[0]["id"]
+
+    r = c.post(f"/scheduled/{sid}/run")
+    after = target._load_schedules()[0]
+    return (r.status_code, after["last_checked"] is not None,
+            isinstance(after["last_hit_count"], int))
+
+
+def _case_new_page():
+    c = TestClient(app_module.app, follow_redirects=False)
+    r = c.get("/scheduled/new")
+    return (r.status_code, "economy" in r.text)
+
+
 CASES = [
     ("GET /scheduled renders the list page (200, scheduled.html body)", _case_list_page, (200, True)),
     ("POST /scheduled/save with an invalid airport code re-renders the form with an error, not a 500", _case_invalid_airport, (200, True)),

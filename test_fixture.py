@@ -126,6 +126,9 @@ def _case_mixed_results_only_passing_kept():
     return (kept, len(RECORD))
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("first pass sees a copy with taxes=0.0 and filters MINUS 'max_taxes'",
      _case_first_pass_args, (0.0, False, 1)),

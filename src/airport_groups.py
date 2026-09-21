@@ -20,3 +20,10 @@ def expand_codes(codes: Iterable[str]) -> List[str]:
 
 def group_label(code: str) -> str:
     return AIRPORT_GROUPS[code]['name'] if code in AIRPORT_GROUPS else code
+
+
+def list_groups() -> List[Dict]:
+    return [
+        {"code": code, "name": AIRPORT_GROUPS[code]["name"], "airports": [code]}
+        for code in sorted(AIRPORT_GROUPS)
+    ]

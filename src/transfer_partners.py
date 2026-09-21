@@ -5,4 +5,7 @@ PROGRAMS = {
     "capital_one": {"name": "Capital One Miles",
                     "transfers_to": ["air_canada", "emirates", "etihad", "finnair", "flying_blue",
                                      "qantas", "singapore", "turkish", "virgin_atlantic", "qatar"]},
+    "bilt": {"name": "Bilt Rewards",
+             "transfers_to": ["air_canada", "american", "emirates", "flying_blue", "turkish",
+                              "united", "virgin_atlantic", "alaska"]},
 }

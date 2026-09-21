@@ -6,6 +6,10 @@ from .pushover import send_award_notification
 from .seats_aero import SeatsAeroClient
 from .scheduled_searches import effective_programs, is_due, load_schedules, query_legs, upsert_schedule
 
+DEFAULT_POLL_MINUTES = 15.0
+MAX_LEGS_PER_RUN = 60
+NOTIFIED_KEYS_CAP = 500
+
 
 def select_results(alert, results):
     filters = alert.get("filters") or {}

@@ -27,8 +27,7 @@ fails=0
 PY=.venv/bin/python
 if [ ! -x "$PY" ]; then
   python3 -m venv .venv >/dev/null 2>&1 \
-    && .venv/bin/pip install -q fastapi==0.109.2 jinja2==3.1.3 \
-         python-multipart==0.0.9 uvicorn==0.27.1 httpx >/dev/null 2>&1 \
+    && grep -v '^playwright' requirements.txt | .venv/bin/pip install -q -r /dev/stdin 'httpx<0.28' >/dev/null 2>&1 \
     || rm -rf .venv
 fi
 [ -x "$PY" ] || PY=python3

@@ -32,6 +32,9 @@ sys.modules["target"] = target
 spec.loader.exec_module(target)
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     # No filters at all -> always passes (None must not raise).
     ("filters=None passes anything",

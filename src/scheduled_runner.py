@@ -10,9 +10,12 @@ from .scheduled_searches import effective_programs, is_due, load_schedules, quer
 def select_results(alert, results):
     filters = alert.get("filters") or {}
     kept = []
+    first_pass_filters = {k: v for k, v in filters.items() if k != "max_taxes"}
     for r in results:
         try:
-            if passes_filters(r, filters):
+            candidate = dict(r or {})
+            candidate["taxes"] = 0.0
+            if passes_filters(candidate, first_pass_filters):
                 kept.append(r)
         except Exception:
             continue

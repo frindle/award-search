@@ -39,6 +39,9 @@ def _defaults():
     }
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("DEFAULT_QUERY carries the cabins default",
      lambda: target.DEFAULT_QUERY["cabins"], ["business", "first"]),

@@ -1,5 +1,5 @@
 """Normalize raw airline filter values into comparable uppercase IATA codes."""
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 
 def normalize_airlines(value) -> List[str]:
@@ -44,3 +44,7 @@ def passes_filters(result: Dict, filters: Optional[Dict]) -> bool:
         if normalize_airlines(result[key]) != normalize_airlines(wanted):
             return False
     return True
+
+
+def filter_results(results: Iterable[Dict], filters: Optional[Dict]) -> List[Dict]:
+    return [result for result in results if passes_filters(result, filters)]

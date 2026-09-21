@@ -36,6 +36,9 @@ def _ur_partners():
     return set(target.PROGRAMS['chase_ur']['transfers_to'])
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     # The new entry exists with the exact program name.
     ("chase_ur registered under its exact name",

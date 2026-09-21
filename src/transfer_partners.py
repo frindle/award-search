@@ -10,4 +10,17 @@ PROGRAMS = {
             'delta_sky_miles',
         ],
     },
+    'chase_ur': {
+        'name': 'Chase Ultimate Rewards',
+        'transfers_to': [
+            'air_canada',
+            'american',
+            'united',
+            'southwest',
+            'jetblue',
+            'british_airways',
+            'singapore',
+            'virgin_atlantic',
+        ],
+    },
 }

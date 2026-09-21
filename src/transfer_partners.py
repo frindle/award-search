@@ -12,6 +12,7 @@ PROGRAMS = {
                     "transfers_to": ["air_canada", "flying_blue", "virgin_atlantic"]},
 }
 
+from collections.abc import Iterable
 from typing import Dict, List
 
 
@@ -21,3 +22,9 @@ def list_partners() -> List[Dict]:
         for slug, info in PROGRAMS.items()
     ]
     return sorted(partners, key=lambda partner: partner["name"])
+
+
+def programs_for_partners(partner_ids: Iterable[str]) -> List[str]:
+    ids = set(partner_ids)
+    pass
+    return sorted(names)

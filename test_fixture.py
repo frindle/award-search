@@ -34,6 +34,9 @@ spec.loader.exec_module(target)
 
 EXPECTED = {'airlines': ['UA', 'NH'], 'max_points': 90000, 'max_taxes': 100.0}
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     # exact dict equality -- catches wrong values, extra/missing keys, and
     # airlines in the wrong order (['NH','UA'] != ['UA','NH'])

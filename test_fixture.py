@@ -82,8 +82,8 @@ CASES = [
      (200, {"partners": [{"code": "UA", "name": "United"}, {"code": "DL", "name": "Delta"}]})),
 
     ("regression: GET /partners/{code} is case-insensitive and 404s unknown codes with the spec shape",
-     lambda: ((lambda r: (r.status_code, r.json()))(client.get("/api/scheduled/partners/ua"))
-              + (lambda r: (r.status_code, r.json()))(client.get("/api/scheduled/partners/zz"))),
+     lambda: ((lambda r: (r.status_code, r.json()))(client.get("/api/scheduled/partners/ua")),
+              (lambda r: (r.status_code, r.json()))(client.get("/api/scheduled/partners/zz"))),
      ((200, {"code": "UA", "name": "United"}),
       (404, {"detail": {"error": "partner not found", "code": "zz"}}))),
 ]

@@ -1,29 +1,33 @@
-"""Scheduled-routes Web UI routes: airport groups and transfer partners."""
+"""Scheduled-routes Web UI routes: transfer partners for award programs."""
+from pydantic import BaseModel
+
 from fastapi import APIRouter, HTTPException
 
-from ..airport_groups import list_groups, expand_codes
+from ..scheduled_runner import run_schedule
+from ..transfer_partners import list_partners
+
+
+class RunRequest(BaseModel):
+    program: str | None = None
 
 router = APIRouter(prefix="/api/scheduled")
 
 
-@router.get("/groups")
-def scheduled_groups():
-    return {"groups": list_groups()}
-
-
-@router.get("/codes/{codes}")
-def scheduled_expand(codes: str):
-    expanded = expand_codes([c for c in codes.split(",") if c.strip()])
-    if not expanded:
-        raise HTTPException(status_code=400, detail={"error": "no airport codes supplied"})
-    return {"codes": expanded}
-
-
 @router.get("/partners")
 def scheduled_partners():
-    return {"partners": []}
+    return {"partners": list_partners()}
 
 
 @router.get("/partners/{code}")
 def scheduled_partner(code: str):
+    for partner in list_partners():
+        if partner["code"].lower() == code.lower():
+            return dict(partner)
     raise HTTPException(status_code=404, detail={"error": "partner not found", "code": code})
+
+
+@router.post("/run")
+def scheduled_run(body: RunRequest):
+    if not body.program:
+        raise HTTPException(status_code=422, detail={"error": "program is required", "code": "invalid_program"})
+    return run_schedule(program=body.program)

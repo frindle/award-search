@@ -1,14 +1,10 @@
-from typing import Dict
+from typing import Dict, List
 
 from .alert_filters import passes_filters
 from .deeplinks import seats_aero_url
 from .pushover import send_award_notification
 from .seats_aero import SeatsAeroClient
 from .scheduled_searches import effective_programs, is_due, load_schedules, query_legs, upsert_schedule
-
-DEFAULT_POLL_MINUTES = 15.0
-MAX_LEGS_PER_RUN = 60
-NOTIFIED_KEYS_CAP = 500
 
 
 def select_results(alert, results):
@@ -67,3 +63,15 @@ def _result_key(r: Dict) -> str:
         str((r or {}).get("date", "")),
         str((r or {}).get("cabin", "")),
     ])
+
+
+def search_schedule(sched: Dict, client=None, today=None) -> List[Dict]:
+    s = sched or {}
+    return list(client.search(
+        s.get("origin"),
+        s.get("destination"),
+        s.get("start_date"),
+        s.get("end_date"),
+        s.get("cabins"),
+        s.get("programs"),
+    ))

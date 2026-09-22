@@ -122,6 +122,7 @@ BASE_DIR = Path(__file__).parent.parent.parent
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "webui" / "templates"), autoescape=True)
 scheduled_routes.init(templates)
+app.include_router(scheduled_routes.router)
 
 
 def _jinja2_format_number(value):

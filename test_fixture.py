@@ -61,6 +61,9 @@ def _lifespan_task_names():
     return names
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("lifespan schedules the scheduler task via create_task",
      lambda: "schedule_scheduler" in _lifespan_task_names(), True),

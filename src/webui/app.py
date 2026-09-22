@@ -102,6 +102,11 @@ def _alert_notify(alert: Dict, r: Dict) -> None:
     )
 
 
+async def schedule_scheduler():
+    """Placeholder for the scheduled-routes scheduler loop (later slice)."""
+    return None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("WebUI starting up")
@@ -111,6 +116,7 @@ async def lifespan(app: FastAPI):
     except (TypeError, ValueError):
         interval = None
     task = asyncio.create_task(alert_scheduler(_alert_search, _alert_notify, interval))
+    sched_task = asyncio.create_task(schedule_scheduler())
     yield
     task.cancel()
     logger.info("WebUI shutting down")

@@ -108,3 +108,14 @@ def notify_hit(sched: Dict, r: Dict) -> None:
         seats=res.get("seats"),
         booking_url=res.get("booking_url"),
     )
+
+
+def run_schedule(sched: Dict, client=None, notify: bool = True) -> List[Dict]:
+    results = search_schedule(sched, client=client)
+    if notify:
+        for r in results:
+            try:
+                notify_hit(sched, r)
+            except Exception:
+                pass
+    return results

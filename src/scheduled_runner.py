@@ -15,7 +15,15 @@ def select_results(alert, results):
         try:
             candidate = dict(r or {})
             candidate["taxes"] = 0.0
-            if passes_filters(candidate, first_pass_filters):
+            if not passes_filters(candidate, first_pass_filters):
+                continue
+            trip = get_trip(r.get("availability_id"))
+            if trip is None:
+                continue
+            second = dict(candidate)
+            second["taxes"] = trip.total_taxes
+            if passes_filters(second, filters):
+                r["taxes"] = trip.total_taxes
                 kept.append(r)
         except Exception:
             continue

@@ -24,7 +24,13 @@ def select_results(alert, results):
             second["taxes"] = trip.total_taxes
             if passes_filters(second, filters):
                 r["taxes"] = trip.total_taxes
-                kept.append(r)
+                origin = r.get("origin")
+                destination = r.get("destination")
+                date = r.get("date")
+                cabin = r.get("cabin", "economy")
+                result = r
+                result['booking_url'] = seats_aero_url(origin, destination, date, cabin)
+                kept.append(result)
         except Exception:
             continue
     return kept

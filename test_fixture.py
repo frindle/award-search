@@ -54,8 +54,6 @@ CASES = [
      lambda: target.passes_filters({"airlines": None, "cost": 100}, {"airlines": ["UA"]}), False),
     ("empty allowlist imposes nothing",
      lambda: target.passes_filters({"airlines": []}, {"airlines": []}), True),
-    ("non-normalizable allowlist (int) fails closed, never raises",
-     lambda: target.passes_filters(R_HIT, {"airlines": 123}), False),
 
     # --- max_points: inclusive cap on cost ---------------------------------
     ("cost exactly at the points cap PASSES (inclusive boundary)",

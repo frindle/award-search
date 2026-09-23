@@ -94,6 +94,9 @@ def run_ticks(poll_minutes, max_calls=2):
     return calls
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("explicit poll_minutes=2 sleeps 120s on every tick (loop, not one-shot)",
      lambda: run_ticks(2, 3), [120, 120, 120]),

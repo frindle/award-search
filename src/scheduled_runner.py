@@ -71,11 +71,11 @@ def _result_key(r: Dict) -> str:
 def search_schedule(sched: Dict, client=None, today=None) -> List[Dict]:
     c = client or SeatsAeroClient()
     s = sched or {}
-    return not (list(c.search(
+    return list(c.search(
         s.get("origin"),
         s.get("destination"),
         s.get("start_date"),
         s.get("end_date"),
         s.get("cabins"),
         s.get("programs"),
-    )))
+    ))

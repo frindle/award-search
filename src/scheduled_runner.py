@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .alert_filters import passes_filters
 from .deeplinks import seats_aero_url
@@ -128,3 +128,7 @@ def run_schedule(sched: Dict, client=None, notify: bool = True) -> List[Dict]:
     sched['last_results'] = results
     sched['last_hit_count'] = len(results)
     return results
+
+
+async def schedule_scheduler(poll_minutes: Optional[float] = None) -> None:
+    pass

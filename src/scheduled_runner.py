@@ -93,3 +93,18 @@ def search_schedule(sched: Dict, client=None, today=None) -> List[Dict]:
         s.get("cabins"),
         s.get("programs"),
     ))
+
+
+def notify_hit(sched: Dict, r: Dict) -> None:
+    s = sched or {}
+    res = r or {}
+    send_award_notification(
+        s.get("origin"),
+        s.get("destination"),
+        s.get("date"),
+        program=res.get("source"),
+        miles=res.get("cost"),
+        cabin=res.get("cabin"),
+        seats=res.get("seats"),
+        booking_url=res.get("booking_url"),
+    )

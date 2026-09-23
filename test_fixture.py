@@ -143,8 +143,6 @@ def case_last_checked_is_now():
     return _ts_ok(sched.get("last_checked"))
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("two hits: returned and recorded (results/count/timestamp)", case_hits,

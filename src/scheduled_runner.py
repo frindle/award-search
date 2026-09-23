@@ -7,6 +7,8 @@ from .pushover import send_award_notification
 from .seats_aero import SeatsAeroClient
 from .scheduled_searches import effective_programs, is_due, load_schedules, query_legs, upsert_schedule
 
+NOTIFIED_KEYS_CAP = 200
+
 
 def select_results(alert, results):
     filters = alert.get("filters") or {}
@@ -119,6 +121,9 @@ def run_schedule(sched: Dict, client=None, notify: bool = True) -> List[Dict]:
                 notify_hit(sched, r)
             except Exception:
                 pass
+    already = set(sched.get("notified_keys") or [])
+    already.update(_result_key(r) for r in results)
+    sched["notified_keys"] = sorted(already)[-NOTIFIED_KEYS_CAP:]
     sched['last_checked'] = datetime.now().isoformat()
     sched['last_results'] = results
     sched['last_hit_count'] = len(results)

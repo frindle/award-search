@@ -68,6 +68,9 @@ def _last_hit_count(results):
     return s["last_hit_count"]
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     # --- the contract: a real coroutine function ---------------------------
     ("is an async def (inspect.iscoroutinefunction)",

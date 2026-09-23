@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, List
 
 from .alert_filters import passes_filters
@@ -118,4 +119,7 @@ def run_schedule(sched: Dict, client=None, notify: bool = True) -> List[Dict]:
                 notify_hit(sched, r)
             except Exception:
                 pass
+    sched['last_checked'] = datetime.now().isoformat()
+    sched['last_results'] = results
+    sched['last_hit_count'] = len(results)
     return results

@@ -40,7 +40,10 @@ def _install_stub_package():
     stubs = {
         "alert_filters": {"passes_filters": lambda *a, **k: True},
         "deeplinks": {"seats_aero_url": lambda *a, **k: "https://example"},
-        "pushover": {},
+        # send_award_notification must exist so the target's module-level
+        # `from .pushover import send_award_notification` succeeds; each case
+        # then rebinds target.send_award_notification to _fake_send / _boom.
+        "pushover": {"send_award_notification": lambda *a, **k: None},
         "seats_aero": {"SeatsAeroClient": object},
         "scheduled_searches": {
             "effective_programs": None, "is_due": None, "load_schedules": None,
@@ -113,11 +116,44 @@ def _expect_raise(fn):
         return type(e).__name__
 
 
+def _case1():
+    _reset()
+    return (target.run_schedule(SCHED, client=FakeClient([R1, R2])),
+            list(NOTIF_CALLS))
+
+
+def _case2():
+    _reset()
+    return (target.run_schedule(SCHED, client=FakeClient([R1]), notify=False),
+            list(NOTIF_CALLS))
+
+
+def _case3():
+    _reset()
+    return (target.run_schedule(SCHED, client=FakeClient([])),
+            len(NOTIF_CALLS))
+
+
+def _case4():
+    _reset()
+    setattr(target, "send_award_notification", _boom)
+    return target.run_schedule(SCHED, client=FakeClient([R1, R2]))
+
+
+def _case5():
+    return _expect_raise(lambda: target.run_schedule(
+        SCHED, client=FakeClient(exc=RuntimeError("api down"))))
+
+
+def _case6():
+    _reset()
+    return (target.run_schedule({}, client=FakeClient([R1])),
+            len(NOTIF_CALLS))
+
+
 CASES = [
     ("returns the client's results and notifies once per result",
-     lambda: (_reset(),
-              (target.run_schedule(SCHED, client=FakeClient([R1, R2])),
-               list(NOTIF_CALLS))),
+     _case1,
      ([dict(R1), dict(R2)],
       [{"origin": "JFK", "destination": "LAX", "date": None, "program": "united",
         "miles": 45000, "cabin": "business", "seats": 3,
@@ -127,33 +163,19 @@ CASES = [
         "booking_url": "https://book/2"}])),
 
     ("notify=False suppresses every notification but still returns results",
-     lambda: (_reset(),
-              (target.run_schedule(SCHED, client=FakeClient([R1]), notify=False),
-               list(NOTIF_CALLS))),
-     ([dict(R1)], [])),
+     _case2, ([dict(R1)], [])),
 
     ("empty result set -> empty list, zero notifications",
-     lambda: (_reset(),
-              (target.run_schedule(SCHED, client=FakeClient([])),
-               len(NOTIF_CALLS))),
-     ([], 0)),
+     _case3, ([], 0)),
 
     ("a notification failure must not lose any results",
-     lambda: (_reset(),
-              setattr(target, "send_award_notification", _boom),
-              target.run_schedule(SCHED, client=FakeClient([R1, R2])))[-1],
-     [dict(R1), dict(R2)]),
+     _case4, [dict(R1), dict(R2)]),
 
     ("client.search() raising propagates (runner must not swallow it)",
-     lambda: _expect_raise(lambda: target.run_schedule(
-         SCHED, client=FakeClient(exc=RuntimeError("api down")))),
-     "RuntimeError"),
+     _case5, "RuntimeError"),
 
     ("degenerate sched={} still runs the search and returns its results",
-     lambda: (_reset(),
-              (target.run_schedule({}, client=FakeClient([R1])),
-               len(NOTIF_CALLS))),
-     ([dict(R1)], 1)),
+     _case6, ([dict(R1)], 1)),
 ]
 
 

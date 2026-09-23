@@ -167,6 +167,9 @@ def case_persisted_state_shape():
     return True
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("hits returned AND upsert_schedule(sched) called once", case_hits_persisted, True),
     ("zero hits still persist the schedule (boundary)", case_zero_hits_still_persisted, True),

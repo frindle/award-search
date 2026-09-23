@@ -156,8 +156,6 @@ def case_return_value_unchanged():
     return len(returned)
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("new keys union into existing notified_keys, sorted",

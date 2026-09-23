@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -8,6 +9,8 @@ from .seats_aero import SeatsAeroClient
 from .scheduled_searches import effective_programs, is_due, load_schedules, query_legs, upsert_schedule
 
 NOTIFIED_KEYS_CAP = 200
+
+DEFAULT_POLL_MINUTES = 5
 
 
 def select_results(alert, results):
@@ -131,4 +134,5 @@ def run_schedule(sched: Dict, client=None, notify: bool = True) -> List[Dict]:
 
 
 async def schedule_scheduler(poll_minutes: Optional[float] = None) -> None:
-    pass
+    while True:
+        await asyncio.sleep((poll_minutes or DEFAULT_POLL_MINUTES) * 60)

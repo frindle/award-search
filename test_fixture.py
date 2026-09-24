@@ -129,6 +129,9 @@ def case_select_keeps_passing_result():
         return target.select_results({"filters": {}}, [_good_result()])
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("log is a stdlib Logger named after the module (__name__)",
      case_logger_identity, (True, True)),

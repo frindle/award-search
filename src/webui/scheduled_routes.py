@@ -1,4 +1,6 @@
 """Scheduled-routes Web UI routes: transfer partners for award programs."""
+from typing import List, Optional
+
 from pydantic import BaseModel
 
 from fastapi import APIRouter, HTTPException, Request
@@ -51,3 +53,9 @@ def scheduled_run(body: RunRequest):
     if not body.program:
         raise HTTPException(status_code=422, detail={"error": "program is required", "code": "invalid_program"})
     return run_schedule(program=body.program)
+
+
+def parse_csv(value: Optional[str]) -> List[str]:
+    if not value:
+        return []
+    return [part.strip() for part in value.split(",") if part.strip()]

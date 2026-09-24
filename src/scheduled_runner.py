@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -7,6 +8,8 @@ from .deeplinks import seats_aero_url
 from .pushover import send_award_notification
 from .seats_aero import SeatsAeroClient
 from .scheduled_searches import effective_programs, is_due, load_schedules, query_legs, upsert_schedule
+
+log = logging.getLogger(__name__)
 
 NOTIFIED_KEYS_CAP = 200
 
@@ -38,6 +41,7 @@ def select_results(alert, results):
                 result['booking_url'] = seats_aero_url(origin, destination, date, cabin)
                 kept.append(result)
         except Exception:
+            log.exception("select_results: dropping result %r", r.get("availability_id"))
             continue
     return kept
 
@@ -48,6 +52,7 @@ def run_cycle(alerts, search_fn):
         try:
             results = search_fn(alert or {})
         except Exception:
+            log.exception("run_cycle: search failed for alert %s", alert_id)
             continue
         kept = select_results(alert or {}, results)
         if kept:

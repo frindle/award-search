@@ -1,7 +1,7 @@
 """Scheduled-routes Web UI routes: transfer partners for award programs."""
 from pydantic import BaseModel
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from ..scheduled_runner import run_schedule
 from ..transfer_partners import list_partners
@@ -23,6 +23,14 @@ def init(templates):
 @router.get("/templates")
 def scheduled_templates():
     return {"templates": TEMPLATES}
+
+
+@router.get("/page/{name}")
+def scheduled_page(request: Request, name: str):
+    try:
+        return TEMPLATES.TemplateResponse(name, {"request": request})
+    except Exception:
+        raise HTTPException(status_code=404, detail={"error": "template not found", "name": name})
 
 
 @router.get("/partners")

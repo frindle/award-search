@@ -114,8 +114,6 @@ def _drive(poll_minutes=None, max_sleeps=2, schedules="__unset__", due_ids=froze
     return sleeps, calls
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     (

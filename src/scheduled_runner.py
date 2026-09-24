@@ -140,5 +140,12 @@ def run_schedule(sched: Dict, client=None, notify: bool = True) -> List[Dict]:
 
 
 async def schedule_scheduler(poll_minutes: Optional[float] = None) -> None:
+    await asyncio.sleep(20)
     while True:
+        for s in (load_schedules() or []):
+            if is_due(s):
+                try:
+                    await asyncio.to_thread(run_schedule, s)
+                except Exception:
+                    log.exception("schedule_scheduler: run failed for %r", (s or {}).get("id"))
         await asyncio.sleep((poll_minutes or DEFAULT_POLL_MINUTES) * 60)

@@ -130,6 +130,7 @@ def run_schedule(sched: Dict, client=None, notify: bool = True) -> List[Dict]:
     sched['last_checked'] = datetime.now().isoformat()
     sched['last_results'] = results
     sched['last_hit_count'] = len(results)
+    upsert_schedule(sched)
     return results
 
 

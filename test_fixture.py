@@ -81,6 +81,8 @@ EMPTY_SCHEDULE = {
 def _fresh():
     """Hit the route with a clean render log; return the response."""
     del RENDERED[:]
+    # Router prefix is /api/scheduled and the route is decorated with
+    # "/scheduled/new", so the full path carries "scheduled" twice.
     return client.get("/api/scheduled/scheduled/new")
 
 

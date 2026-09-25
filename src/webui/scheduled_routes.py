@@ -99,6 +99,42 @@ def scheduled_edit(request: Request, sched_id: str):
     )
 
 
+class EditRequest(BaseModel):
+    name: Optional[str] = None
+    origins: Optional[List[str]] = None
+    destinations: Optional[List[str]] = None
+    date_ranges: Optional[List[Dict]] = None
+    cabins: Optional[List[str]] = None
+    programs: Optional[List[str]] = None
+    transfer_partners: Optional[List[str]] = None
+    filters: Optional[Dict] = None
+    interval_hours: Optional[int] = None
+    notify_pushover: Optional[bool] = None
+    enabled: Optional[bool] = None
+
+
+@router.post("/{sched_id}")
+def scheduled_edit_save(sched_id: str, body: EditRequest):
+    schedule = SCHEDULES.get(sched_id)
+    if schedule is None:
+        raise HTTPException(status_code=404, detail={"error": "schedule not found", "sched_id": sched_id})
+    updated = dict(schedule)
+    for field in ("name", "origins", "destinations", "date_ranges", "cabins",
+                  "programs", "transfer_partners", "filters", "interval_hours",
+                  "notify_pushover", "enabled"):
+        value = getattr(body, field)
+        if value is not None:
+            updated[field] = value
+    # PRESERVES created_at/last_checked/last_results/notified_keys from the existing record on an edit.
+    for key in ("created_at", "last_checked", "last_results", "notified_keys"):
+        if key in schedule:
+            updated[key] = schedule[key]
+        else:
+            updated[key] = [] if key == "notified_keys" else None
+    SCHEDULES[sched_id] = updated
+    return {"schedule": normalize_schedule(updated)}
+
+
 @router.get("/partners")
 def scheduled_partners():
     return {"partners": list_partners()}

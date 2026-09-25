@@ -127,8 +127,6 @@ def _regression_case():
     return (resp.status_code, resp.json())
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("happy path: 200 + every results-row value rendered from context",

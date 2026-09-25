@@ -86,6 +86,9 @@ def _fresh():
     return client.get("/api/scheduled/scheduled/new")
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("GET /scheduled/new -> 200 and renders scheduled_edit.html",
      lambda: (_fresh().status_code, RENDERED[-1][0]),

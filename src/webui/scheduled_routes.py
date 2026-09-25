@@ -199,6 +199,18 @@ def scheduled_edit_save(sched_id: str, body: EditRequest):
     return {"schedule": normalize_schedule(updated)}
 
 
+def delete_schedule(sched_id: str):
+    if sched_id not in SCHEDULES:
+        raise HTTPException(status_code=404, detail={"error": "schedule not found", "sched_id": sched_id})
+    del SCHEDULES[sched_id]
+
+
+@router.post("/{sched_id}/delete")
+def scheduled_delete(sched_id: str):
+    delete_schedule(sched_id)
+    return RedirectResponse('/scheduled', status_code=303)
+
+
 @router.get("/partners")
 def scheduled_partners():
     return {"partners": list_partners()}

@@ -64,6 +64,13 @@ CASES = [
                    type(target.load_schedules()).__name__,
                    len(target.load_schedules())))[2:], ["list", 1]),
 
+    ("valid JSON that is NOT an object (e.g. a list) -> [] (no raise, "
+     "not the same code path as bad JSON)",
+     lambda: (_wipe(),
+              FILE.parent.mkdir(parents=True, exist_ok=True),
+              FILE.write_text("[1, 2, 3]"),
+              target.load_schedules())[-1], []),
+
     # --- upsert / save ------------------------------------------------------
     ("upsert inserts a new record; on-disk shape is keyed by id like alerts.json",
      lambda: (_wipe(),
@@ -83,6 +90,13 @@ CASES = [
               target.save_schedules({"x": {"id": "x"}}),
               sorted(p.name for p in FILE.parent.iterdir() if 'scheduled' in p.name))[-1],
      ["scheduled_searches.json"]),
+
+    ("save_schedules called twice in a row does not raise even though "
+     "DATA_DIR already exists from the first call",
+     lambda: (_wipe(),
+              target.save_schedules({"x": {"id": "x"}}),
+              target.save_schedules({"y": {"id": "y"}}),
+              _on_disk())[-1], {"y": {"id": "y"}}),
 
     # --- is_due -------------------------------------------------------------
     ("disabled record (enabled=False) is never due, even with stale last_checked",

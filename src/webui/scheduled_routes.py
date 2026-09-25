@@ -30,6 +30,8 @@ def airport_groups_list():
 def transfer_partners_list():
     return list_partners()
 
+PROGRAM_CHOICES = [{"id": pid, "name": p.get("name") or ""} for pid, p in load_programs_config().items()]
+
 TEMPLATES = []
 
 SCHEDULES: Dict[str, Dict] = {}

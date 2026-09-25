@@ -101,6 +101,18 @@ def scheduled_edit(request: Request, sched_id: str):
     )
 
 
+@router.get("/{sched_id}/result")
+def scheduled_result(request: Request, sched_id: str):
+    schedule = SCHEDULES.get(sched_id)
+    if schedule is None:
+        raise HTTPException(status_code=404, detail={"error": "schedule not found", "sched_id": sched_id})
+    results = list(schedule.get("last_results") or [])
+    return TEMPLATES.TemplateResponse(
+        "scheduled_result.html",
+        {"request": request, "schedule": schedule, "results": results},
+    )
+
+
 @router.post("/scheduled/save")
 async def scheduled_save(request: Request):
     form = await request.form()

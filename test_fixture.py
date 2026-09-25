@@ -191,8 +191,6 @@ def case_invalid_body_422():
     return {"status": r.status_code}
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("edit applies submitted fields and PRESERVES created_at/last_checked/"

@@ -47,6 +47,7 @@ def _on_disk():
     return json.loads(FILE.read_text())
 
 
+
 CASES = [
     # --- load_schedules -----------------------------------------------------
     ("missing file -> [] (never raises)",

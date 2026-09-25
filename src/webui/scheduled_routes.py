@@ -4,6 +4,8 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 from fastapi import APIRouter, HTTPException, Request
+from starlette.responses import RedirectResponse
+import uuid
 
 from ..scheduled_runner import run_schedule
 from ..transfer_partners import list_partners
@@ -97,6 +99,68 @@ def scheduled_edit(request: Request, sched_id: str):
             "error": None,
         },
     )
+
+
+@router.post("/scheduled/save")
+async def scheduled_save(request: Request):
+    form = await request.form()
+
+    sched_id = (form.get("sched_id") or "").strip() if isinstance(form.get("sched_id"), str) else ""
+    name = (form.get("name") or "") if isinstance(form.get("name"), str) else ""
+    origins = parse_csv(form.get("origins"))
+    destinations = parse_csv(form.get("destinations"))
+    date_ranges = parse_date_ranges(
+        form.getlist("range_start"), form.getlist("range_end"))
+    cabins = list(form.getlist("cabins"))
+    programs = list(form.getlist("programs"))
+    transfer_partners = list(form.getlist("transfer_partners"))
+
+    airlines = parse_csv(form.get("airlines"))
+    try:
+        max_points = parse_cap(form.get("max_points"))
+    except ValueError:
+        max_points = None
+    try:
+        max_taxes = parse_cap(form.get("max_taxes"))
+    except ValueError:
+        max_taxes = None
+
+    interval_raw = form.get("interval_hours")
+    try:
+        interval_hours = int(str(interval_raw).strip()) if str(interval_raw or "").strip() else 6
+    except (ValueError, TypeError):
+        interval_hours = 6
+
+    notify_pushover = "notify_pushover" in form
+    enabled = "enabled" in form
+
+    schedule = {
+        "id": sched_id or str(uuid.uuid4()),
+        "name": name,
+        "origins": origins,
+        "destinations": destinations,
+        "date_ranges": date_ranges,
+        "cabins": cabins,
+        "programs": programs,
+        "transfer_partners": transfer_partners,
+        "filters": {"airlines": airlines, "max_points": max_points, "max_taxes": max_taxes},
+        "interval_hours": interval_hours,
+        "notify_pushover": notify_pushover,
+        "enabled": enabled,
+    }
+
+    if sched_id and sched_id in SCHEDULES:
+        existing = dict(SCHEDULES[sched_id])
+        for key in ("created_at", "last_checked", "last_results", "notified_keys"):
+            schedule[key] = existing.get(key)
+        SCHEDULES[sched_id] = schedule
+    else:
+        for key in ("created_at", "last_checked", "last_results"):
+            schedule[key] = None
+        schedule["notified_keys"] = []
+        SCHEDULES[schedule["id"]] = schedule
+
+    return RedirectResponse('/scheduled?saved=1', status_code=303)
 
 
 class EditRequest(BaseModel):

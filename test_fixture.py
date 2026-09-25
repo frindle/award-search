@@ -76,8 +76,6 @@ def _get(path):
     return (r.status_code, body)
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     # The endpoint exists at the exact path and returns list_groups() verbatim.

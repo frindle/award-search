@@ -73,8 +73,6 @@ def _delete(sched_id):
     return (r.status_code, r.headers.get("location"))
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("deleting a known schedule 303-redirects to /scheduled",

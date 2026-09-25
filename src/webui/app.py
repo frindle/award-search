@@ -31,6 +31,8 @@ from ..alerts import (
 )
 from ..deeplinks import flight_links, seats_aero_url
 from ..settings import load_settings, save_settings
+from ..scheduled_runner import schedule_scheduler
+from . import scheduled_routes
 
 
 search_results: Dict[str, Any] = {}
@@ -110,8 +112,10 @@ async def lifespan(app: FastAPI):
     except (TypeError, ValueError):
         interval = None
     task = asyncio.create_task(alert_scheduler(_alert_search, _alert_notify, interval))
+    sched_task = asyncio.create_task(schedule_scheduler())
     yield
     task.cancel()
+    sched_task.cancel()
     logger.info("WebUI shutting down")
 
 
@@ -120,6 +124,8 @@ app = FastAPI(title="Award Search", lifespan=lifespan)
 BASE_DIR = Path(__file__).parent.parent.parent
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "src" / "webui" / "templates"), autoescape=True)
+scheduled_routes.init(templates)
+app.include_router(scheduled_routes.router)
 
 
 def _jinja2_format_number(value):

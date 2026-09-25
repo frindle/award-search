@@ -116,6 +116,17 @@ EMPTY_SCHEDULE = {
 }
 
 CASES = [
+    # Runs FIRST, before any set_schedules call: exercises the module-level
+    # SCHEDULES store in its initial (empty) state. If the `SCHEDULES`
+    # declaration is missing, the route handler raises NameError -> 500, and
+    # this case fails even though later cases would re-create the global via
+    # set_schedules and pass.
+    ("unseeded store: unknown sched_id on a fresh module still gets a clean 404 (not 500)",
+     lambda: _get("/api/scheduled/scheduled/ghost/edit"),
+     {"status": 404, "body": {
+         "detail": {"error": "schedule not found", "sched_id": "ghost"},
+     }}),
+
     ("GET /api/scheduled/s-1/edit renders scheduled_edit.html with the loaded schedule and mode='edit'",
      lambda: (_seed(), _get("/api/scheduled/scheduled/s-1/edit"))[1],
      {"status": 200, "body": {

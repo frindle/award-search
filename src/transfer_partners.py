@@ -26,7 +26,7 @@ def list_partners() -> List[Dict]:
 
 def programs_for_partners(partner_ids: Iterable[str]) -> List[str]:
     ids = set(partner_ids)
-    pass
+    names = [info["name"] for info in PROGRAMS.values() if set(info["transfers_to"]) & ids]
     return sorted(names)
 
 

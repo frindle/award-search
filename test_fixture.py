@@ -115,6 +115,9 @@ EMPTY_SCHEDULE = {
     "enabled": True,
 }
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     # Runs FIRST, before any set_schedules call: exercises the module-level
     # SCHEDULES store in its initial (empty) state. If the `SCHEDULES`

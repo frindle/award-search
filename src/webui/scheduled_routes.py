@@ -211,6 +211,17 @@ def scheduled_delete(sched_id: str):
     return RedirectResponse('/scheduled', status_code=303)
 
 
+@router.post("/{sched_id}/toggle")
+def scheduled_toggle(sched_id: str):
+    schedule = SCHEDULES.get(sched_id)
+    if schedule is None:
+        raise HTTPException(status_code=404, detail={"error": "schedule not found", "sched_id": sched_id})
+    updated = dict(schedule)
+    updated["enabled"] = not bool(schedule.get("enabled", True))
+    SCHEDULES[sched_id] = updated
+    return RedirectResponse('/scheduled', status_code=303)
+
+
 @router.get("/partners")
 def scheduled_partners():
     return {"partners": list_partners()}

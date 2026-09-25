@@ -70,8 +70,6 @@ def _integration_templates_route():
         return (resp.status_code, resp.json())
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("PROGRAM_CHOICES is a non-empty list",

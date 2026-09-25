@@ -75,3 +75,19 @@ def parse_date_ranges(starts: List[str], ends: List[str]) -> List[Dict]:
         end = ends[i] if i < len(ends) else None
         ranges.append({"start": start, "end": end})
     return ranges
+
+
+def parse_cap(value: Optional[str]) -> Optional[float|int]:
+    """Parse a cap value from form input."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        number = float(text)
+    except ValueError:
+        raise ValueError("invalid cap value") from None
+    if number.is_integer():
+        return int(number)
+    return number

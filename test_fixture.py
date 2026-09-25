@@ -156,6 +156,23 @@ def case_edit_preserves():
     )
 
 
+def case_create_run_state_keys_present():
+    # Deleting the loop that seeds created_at/last_checked/last_results on a
+    # CREATE leaves those keys ABSENT from the record. rec.get() would still
+    # return None for absent keys, so assert key PRESENCE explicitly -- an
+    # implementation that skips seeding must fail here.
+    _reset()
+    status, location = _save(FULL_FORM)
+    rec = list(target.SCHEDULES.values())[0]
+    return (
+        status,
+        location,
+        tuple(k in rec for k in ("created_at", "last_checked", "last_results")),
+        (rec["created_at"], rec["last_checked"], rec["last_results"]),
+        "notified_keys" in rec and rec["notified_keys"] == [],
+    )
+
+
 def case_invalid_values():
     _reset()
     status, location = _save({
@@ -216,6 +233,9 @@ CASES = [
      case_edit_preserves,
      (303, "/scheduled?saved=1", 1, "renamed", ["SFO"], ["economy"], 24, False,
       "2026-01-01T00:00:00Z", "2026-02-02T00:00:00Z", [{"program": "united"}], ["k1"])),
+    ("create seeds created_at/last_checked/last_results keys as None (present, not absent)",
+     case_create_run_state_keys_present,
+     (303, "/scheduled?saved=1", (True, True, True), (None, None, None), True)),
     ("invalid caps/interval: still 303 (not a 5xx), bad values coerced to defaults",
      case_invalid_values,
      (303, "/scheduled?saved=1", None, None, 6)),

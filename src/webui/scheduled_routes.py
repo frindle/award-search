@@ -8,6 +8,7 @@ from starlette.responses import RedirectResponse
 import uuid
 
 from ..airport_groups import list_groups
+from ..search.programs.base import load_programs_config
 from ..scheduled_runner import run_schedule
 from ..transfer_partners import list_partners
 
@@ -44,9 +45,35 @@ def set_schedules(schedules):
     SCHEDULES = schedules
 
 
+def effective_programs(schedule: Dict) -> List[str]:
+    """Program ids a schedule runs against: its own if set, else every configured one."""
+    programs = list((schedule or {}).get("programs") or [])
+    if not programs:
+        programs = list(load_programs_config().keys())
+    return sorted(programs)
+
+
 @router.get("/templates")
 def scheduled_templates():
     return {"templates": TEMPLATES}
+
+
+@router.get("/{sched_id}/preview")
+def scheduled_preview(sched_id: str):
+    schedule = SCHEDULES.get(sched_id)
+    if schedule is None:
+        raise HTTPException(status_code=404, detail={"error": "schedule not found", "sched_id": sched_id})
+    legs = []
+    for origin in (schedule.get("origins") or []):
+        for destination in (schedule.get("destinations") or []):
+            for date_range in (schedule.get("date_ranges") or []):
+                legs.append({
+                    "origin": origin,
+                    "destination": destination,
+                    "start_date": date_range.get("start"),
+                    "end_date": date_range.get("end"),
+                })
+    return {"legs": legs, "leg_count": len(legs), "programs": effective_programs(schedule)}
 
 
 @router.get("/page/{name}")

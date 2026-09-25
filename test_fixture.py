@@ -57,6 +57,9 @@ def _get(path):
     return (resp.status_code, resp.json())
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("GET /api/transfer-partners returns 200",
      lambda: _get("/api/transfer-partners")[0], 200),

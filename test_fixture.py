@@ -70,6 +70,9 @@ def _integration_templates_route():
         return (resp.status_code, resp.json())
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("PROGRAM_CHOICES is a non-empty list",
      lambda: isinstance(getattr(target, "PROGRAM_CHOICES", None), list) and len(target.PROGRAM_CHOICES) > 0,

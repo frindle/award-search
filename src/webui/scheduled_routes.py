@@ -35,6 +35,45 @@ def scheduled_page(request: Request, name: str):
         raise HTTPException(status_code=404, detail={"error": "template not found", "name": name})
 
 
+def normalize_schedule(raw: Optional[Dict]) -> Dict:
+    """Coerce raw schedule input into the full shape scheduled_edit.html renders."""
+    raw = dict(raw or {})
+    filters = dict(raw.get("filters") or {})
+    return {
+        "id": raw.get("id"),
+        "name": raw.get("name", ""),
+        "origins": list(raw.get("origins") or []),
+        "destinations": list(raw.get("destinations") or []),
+        "date_ranges": list(raw.get("date_ranges") or []),
+        "cabins": list(raw.get("cabins") or []),
+        "programs": list(raw.get("programs") or []),
+        "transfer_partners": list(raw.get("transfer_partners") or []),
+        "filters": {
+            "airlines": list(filters.get("airlines") or []),
+            "max_points": filters.get("max_points"),
+            "max_taxes": filters.get("max_taxes"),
+        },
+        "interval_hours": raw.get("interval_hours", 6),
+        "notify_pushover": bool(raw.get("notify_pushover", False)),
+        "enabled": bool(raw.get("enabled", True)),
+    }
+
+
+@router.get("/scheduled/new")
+def scheduled_new(request: Request):
+    return TEMPLATES.TemplateResponse(
+        "scheduled_edit.html",
+        {
+            "request": request,
+            "schedule": normalize_schedule({}),
+            "mode": "new",
+            "programs": [],
+            "partners": [],
+            "error": None,
+        },
+    )
+
+
 @router.get("/partners")
 def scheduled_partners():
     return {"partners": list_partners()}

@@ -3,6 +3,8 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
+import anyio
+
 from fastapi import APIRouter, HTTPException, Request
 from starlette.responses import RedirectResponse
 import uuid
@@ -233,6 +235,14 @@ def scheduled_partner(code: str):
         if partner["code"].lower() == code.lower():
             return dict(partner)
     raise HTTPException(status_code=404, detail={"error": "partner not found", "code": code})
+
+
+@router.post("/{sched_id}/run")
+async def scheduled_run_by_id(sched_id: str):
+    schedule = SCHEDULES.get(sched_id)
+    if schedule is None:
+        raise HTTPException(status_code=404, detail={"error": "schedule not found", "sched_id": sched_id})
+    return await anyio.to_thread.run_sync(run_schedule, schedule)
 
 
 @router.post("/run")

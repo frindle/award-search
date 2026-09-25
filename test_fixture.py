@@ -220,8 +220,6 @@ def case_unchecked_and_empty():
     )
 
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     ("new schedule: 303 to /scheduled?saved=1 and full record upserted",

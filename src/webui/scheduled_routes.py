@@ -24,6 +24,11 @@ api_router = APIRouter(prefix="/api")
 def airport_groups_list():
     return list_groups()
 
+
+@api_router.get("/transfer-partners")
+def transfer_partners_list():
+    return list_partners()
+
 TEMPLATES = []
 
 SCHEDULES: Dict[str, Dict] = {}

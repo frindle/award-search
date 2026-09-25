@@ -161,6 +161,29 @@ def case_record_without_metadata():
     }
 
 
+def case_edit_normalizes_missing_metadata_keys():
+    """Edit of a record LACKING the metadata keys: after saving, the stored
+    record carries ALL FOUR metadata keys (created_at/last_checked/
+    last_results/notified_keys), even if their values are None/[]. The runner
+    relies on those keys being present on every stored record, so a save that
+    drops or renames them leaves the store in a shape it cannot read."""
+    client = _app_with({"id": "sched_1", "name": "bare"})
+    r = client.post("/api/scheduled/sched_1", json={"origins": ["LAX"]})
+    assert r.status_code == 200, (r.status_code, r.text)
+    stored = target.SCHEDULES["sched_1"]
+    return {
+        "status": r.status_code,
+        "has_created_at": "created_at" in stored,
+        "has_last_checked": "last_checked" in stored,
+        "has_last_results": "last_results" in stored,
+        "has_notified_keys": "notified_keys" in stored,
+        "created_at": stored.get("created_at"),
+        "last_checked": stored.get("last_checked"),
+        "last_results": stored.get("last_results"),
+        "notified_keys": stored.get("notified_keys"),
+    }
+
+
 def case_invalid_body_422():
     """Wrong-typed field -> 422 validation error, not a 500."""
     client = _app_with(BASE_RECORD)
@@ -218,6 +241,20 @@ CASES = [
          "name": "bare",
          "origins": ["LAX"],
          "created_at": None,
+         "notified_keys": [],
+     }),
+    ("edit of a record lacking metadata keys still stores all four metadata "
+     "keys (created_at/last_checked/last_results/notified_keys) after saving",
+     case_edit_normalizes_missing_metadata_keys,
+     {
+         "status": 200,
+         "has_created_at": True,
+         "has_last_checked": True,
+         "has_last_results": True,
+         "has_notified_keys": True,
+         "created_at": None,
+         "last_checked": None,
+         "last_results": None,
          "notified_keys": [],
      }),
     ("wrong-typed field in the edit body -> 422 validation error, not a 500",

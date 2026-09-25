@@ -61,9 +61,10 @@ test_fixture.py is the test fixture -- changing it invalidates the check.
 The fixture drives the route through fastapi.testclient and asserts both the
 response body and the stored record, so every line of the new route is covered:
 the 404 branch (unknown id), the field-merge loop (partial + full edits), each of
-the four preserved-key assignments (asserted against the pre-edit values), and the
-200 response shape. Do not add untested helper lines; keep the preservation logic
-inline in `scheduled_edit_save`.
+the four preserved-key assignments -- asserted both against the pre-edit values on
+a record that HAS them and for key PRESENCE after saving a record that LACKS them
+-- and the 200 response shape. Do not add untested helper lines; keep the
+preservation logic inline in `scheduled_edit_save`.
 
 ## Loop instruction
 

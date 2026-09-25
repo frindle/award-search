@@ -109,6 +109,9 @@ def case_regression_templates():
     return (r.status_code, r.json())
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("2 origins x 1 destination x 1 date range -> exact legs, leg_count=2, own programs",
      case_happy,

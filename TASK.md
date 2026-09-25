@@ -53,8 +53,9 @@ Behaviour that must NOT change:
 
 ## Scope
 
-Only edit `src/webui/scheduled_routes.py`; do not edit `verify.sh`, `test_fixture.py` or `TASK.md`.
-test_fixture.py is the test fixture -- changing it invalidates the check.
+Only edit `src/webui/scheduled_routes.py` and `test_fixture.py`; do not edit
+`verify.sh` or `TASK.md`. test_fixture.py is the adversarial fixture for this
+task; extend it only with cases that fail on a mutated reference impl.
 
 ## Keep every changed line exercised (relevance)
 

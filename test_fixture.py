@@ -101,6 +101,20 @@ CASES = [
      lambda: (lambda r: (RENDERED[-1][1].get("programs"), RENDERED[-1][1].get("partners")))(_fresh()),
      ([], [])),
 
+    # FastAPI serializes the returned string as a JSON string; a `not (...)`
+    # mutant would yield '"false"' instead.
+    ("response body is the rendered template sentinel, not a JSON value",
+     lambda: _fresh().json(),
+     "HTML:scheduled_edit.html"),
+
+    ("context carries an 'error' slot set to None (key present, not renamed)",
+     lambda: (lambda r: ("error" in RENDERED[-1][1], RENDERED[-1][1]["error"]))(_fresh()),
+     (True, None)),
+
+    ("normalize_schedule(None) coerces to the same EMPTY schedule",
+     lambda: target.normalize_schedule(None) == EMPTY_SCHEDULE,
+     True),
+
     ("regression: existing /api/scheduled/partners still returns its JSON list",
      lambda: client.get("/api/scheduled/partners").json(),
      {"partners": []}),

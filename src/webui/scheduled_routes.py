@@ -16,10 +16,17 @@ router = APIRouter(prefix="/api/scheduled")
 
 TEMPLATES = []
 
+SCHEDULES: Dict[str, Dict] = {}
+
 
 def init(templates):
     global TEMPLATES
     TEMPLATES = templates
+
+
+def set_schedules(schedules):
+    global SCHEDULES
+    SCHEDULES = schedules
 
 
 @router.get("/templates")
@@ -67,6 +74,24 @@ def scheduled_new(request: Request):
             "request": request,
             "schedule": normalize_schedule({}),
             "mode": "new",
+            "programs": [],
+            "partners": [],
+            "error": None,
+        },
+    )
+
+
+@router.get("/scheduled/{sched_id}/edit")
+def scheduled_edit(request: Request, sched_id: str):
+    schedule = SCHEDULES.get(sched_id)
+    if schedule is None:
+        raise HTTPException(status_code=404, detail={"error": "schedule not found", "sched_id": sched_id})
+    return TEMPLATES.TemplateResponse(
+        "scheduled_edit.html",
+        {
+            "request": request,
+            "schedule": normalize_schedule(schedule),
+            "mode": "edit",
             "programs": [],
             "partners": [],
             "error": None,

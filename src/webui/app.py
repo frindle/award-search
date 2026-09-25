@@ -31,6 +31,7 @@ from ..alerts import (
 )
 from ..deeplinks import flight_links, seats_aero_url
 from ..settings import load_settings, save_settings
+from ..scheduled_runner import schedule_scheduler
 from . import scheduled_routes
 
 
@@ -102,11 +103,6 @@ def _alert_notify(alert: Dict, r: Dict) -> None:
     )
 
 
-async def schedule_scheduler():
-    """Placeholder for the scheduled-routes scheduler loop (later slice)."""
-    return None
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("WebUI starting up")
@@ -119,6 +115,7 @@ async def lifespan(app: FastAPI):
     sched_task = asyncio.create_task(schedule_scheduler())
     yield
     task.cancel()
+    sched_task.cancel()
     logger.info("WebUI shutting down")
 
 

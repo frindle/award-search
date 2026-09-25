@@ -46,8 +46,6 @@ def _client():
 
 # --- cases ------------------------------------------------------------------
 
-# Model-drafted; NOT yet read by a human.
-DRAFT_UNCONFIRMED = True
 
 CASES = [
     (

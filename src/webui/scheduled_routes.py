@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Request
 from starlette.responses import RedirectResponse
 import uuid
 
+from ..airport_groups import list_groups
 from ..scheduled_runner import run_schedule
 from ..transfer_partners import list_partners
 
@@ -15,6 +16,13 @@ class RunRequest(BaseModel):
     program: str | None = None
 
 router = APIRouter(prefix="/api/scheduled")
+
+api_router = APIRouter(prefix="/api")
+
+
+@api_router.get("/airport-groups")
+def airport_groups_list():
+    return list_groups()
 
 TEMPLATES = []
 

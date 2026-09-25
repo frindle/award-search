@@ -138,6 +138,9 @@ def _delete_still_works():
     return (r.status_code, r.headers.get("location"), "s1" in target.SCHEDULES)
 
 
+# Model-drafted; NOT yet read by a human.
+DRAFT_UNCONFIRMED = True
+
 CASES = [
     ("enabled schedule toggles to disabled; 303 /scheduled; all other keys preserved",
      _toggle_enabled_true,

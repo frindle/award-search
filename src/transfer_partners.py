@@ -10,6 +10,11 @@ PROGRAMS = {
                               "united", "virgin_atlantic", "alaska"]},
     "wells_fargo": {"name": "Wells Fargo Rewards",
                     "transfers_to": ["air_canada", "flying_blue", "virgin_atlantic"]},
+    "amex_mr": {"name": "American Express Membership Rewards",
+                "transfers_to": ["hyatt_worldwide", "marriott_bonvoy", "hilton_honors", "delta_sky_miles"]},
+    "chase_ur": {"name": "Chase Ultimate Rewards",
+                 "transfers_to": ["air_canada", "american", "united", "southwest", "jetblue",
+                                  "british_airways", "singapore", "virgin_atlantic"]},
 }
 
 from collections.abc import Iterable
